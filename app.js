@@ -173,17 +173,30 @@ $('#novoForm').addEventListener('submit',e=>{e.preventDefault();
 
 /* ---------- CARTEIRA ---------- */
 function cartRows(){return allProjects().map(p=>({p,c:calc(p),inc:incluir(p)}))}
+let cartQ='',cartF='todos';
+const semAc=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function cartFiltro({p,c,inc}){
+  if(cartF==='marcados'&&!inc)return false;if(cartF==='desmarcados'&&inc)return false;
+  if(cartF==='completo'&&(c.semEstrutura||c.falta))return false;if(cartF==='falta'&&(c.semEstrutura||!c.falta))return false;if(cartF==='sem'&&!c.semEstrutura)return false;
+  if(!cartQ)return true;
+  const alvo=semAc([p.sku,p.codigo,p.colecao].concat(c.linhas.map(l=>(l.c.forn||'')+' '+(l.c.nome||''))).join(' '));
+  return semAc(cartQ).split(/\s+/).filter(Boolean).every(t=>alvo.includes(t));
+}
 function renderCarteira(){
-  const rows=cartRows();let T=0,TQ=0;const forn={},col={};let sem=0,falta=0;
+  const todas=cartRows();const filtrando=!!cartQ||cartF!=='todos';const rows=todas.filter(cartFiltro);let T=0,TQ=0;const forn={},col={};let sem=0,falta=0;
   const body=rows.map(({p,c,inc})=>{if(inc){T+=c.desemb;TQ+=c.Q;col[p.colecao]=(col[p.colecao]||0)+c.desemb;c.linhas.forEach(l=>{const k=short(l.c.forn)||'Sem fornecedor';forn[k]=(forn[k]||0)+l.v});if(c.semEstrutura)sem++;else if(c.falta)falta++}
     const flag=c.semEstrutura?'<span class="pill bad">sem estrutura</span>':c.falta?'<span class="pill warn">custo faltando</span>':'<span class="pill ok">completo</span>';
     return '<tr'+(inc?'':' class="muted"')+'><td><input type="checkbox" data-inc="'+esc(p.id)+'" '+(inc?'checked':'')+' aria-label="Incluir"></td><td><button class="btn ghost" style="color:inherit;padding:0;text-align:left" data-open="'+esc(p.id)+'">'+esc(p.sku)+'</button><div class="note">'+esc(p.colecao)+(p.codigo?' · '+esc(p.codigo):'')+'</div></td><td class="n">'+fmtI.format(c.Q)+'</td><td class="n">'+fmtR.format(c.unit)+'</td><td class="n">'+fmtR0.format(c.desemb)+'</td><td>'+flag+'</td></tr>'}).join('');
-  $('#cartTbl').innerHTML='<thead><tr><th></th><th>Projeto</th><th class="n">Qtd</th><th class="n">Custo un.</th><th class="n">Caixa</th><th>Estrutura</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td></td><td>Total da carteira</td><td class="n">'+fmtI.format(TQ)+'</td><td></td><td class="n">'+fmtR0.format(T)+'</td><td></td></tr></tfoot>';
+  let TG=0;if(filtrando)todas.forEach(({c,inc})=>{if(inc)TG+=c.desemb});
+  const vazio=rows.length?'':'<tr><td></td><td colspan="5" class="muted">Nenhum projeto encontrado para essa busca.</td></tr>';
+  $('#cartTbl').innerHTML='<thead><tr><th></th><th>Projeto</th><th class="n">Qtd</th><th class="n">Custo un.</th><th class="n">Caixa</th><th>Estrutura</th></tr></thead><tbody>'+body+vazio+'</tbody><tfoot><tr><td></td><td>'+(filtrando?'Total dos filtrados ('+rows.length+' de '+todas.length+')':'Total da carteira')+'</td><td class="n">'+fmtI.format(TQ)+'</td><td></td><td class="n">'+fmtR0.format(T)+'</td><td></td></tr>'+(filtrando?'<tr><td></td><td class="muted">Total da carteira (todos marcados)</td><td></td><td></td><td class="n muted">'+fmtR0.format(TG)+'</td><td></td></tr>':'')+'</tfoot>';
   const w=$('#cartWarn');if(sem||falta){w.hidden=false;w.textContent=(sem?sem+' projeto(s) sem estrutura entram com R$ 0':'')+(sem&&falta?' e ':'')+(falta?falta+' com custo faltando':'')+'. Abra cada um em Custos para completar e o total fica real.'}else w.hidden=true;
   bars('#cartForn',Object.entries(forn).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,10));
   bars('#cartCol',Object.entries(col).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]));
 }
 function bars(sel,arr){const m=Math.max(1,...arr.map(x=>x[1]));$(sel).innerHTML=arr.length?arr.map(([k,v])=>'<span class="lab" title="'+esc(k)+'">'+esc(k)+'</span><span class="num" style="text-align:right">'+fmtR0.format(v)+'</span><div class="b"><i style="width:'+(v/m*100).toFixed(1)+'%"></i></div>').join(''):'<span class="note">Nada ainda.</span>'}
+$('#cartSearch').addEventListener('input',e=>{cartQ=e.target.value.trim();renderCarteira()});
+$('#cartChips').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;cartF=b.dataset.f;document.querySelectorAll('#cartChips .chip').forEach(x=>x.setAttribute('aria-pressed',x===b));renderCarteira()});
 $('#cartTbl').addEventListener('change',e=>{const id=e.target.dataset.inc;if(id)setOv(byId(id),{incluir:e.target.checked})});
 $('#cartTbl').addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(!b)return;cur=b.dataset.open;showTab('simulador')});
 $('#btnCsv').addEventListener('click',async()=>{

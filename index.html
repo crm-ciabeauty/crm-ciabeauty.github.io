@@ -327,10 +327,14 @@ body{font-size:14px}
   <!-- CARTEIRA -->
   <section id="tab-carteira" hidden>
     <div class="row" style="margin-bottom:12px">
-      <div class="grow"><h2>Desembolso previsto dos próximos lotes</h2><div class="note">Soma dos projetos marcados, com as quantidades e estruturas que você definiu no simulador.</div></div>
+      <div class="grow"><h2>Desembolso previsto dos próximos lotes</h2><div class="note">Soma dos projetos marcados, com as quantidades e estruturas que você definiu em Custos.</div></div>
       <button class="btn" id="btnCsv">Exportar CSV</button>
     </div>
     <div class="callout" id="cartWarn" hidden></div>
+    <div class="row" style="margin-bottom:10px">
+      <input type="search" id="cartSearch" placeholder="Buscar projeto, código, coleção ou fornecedor" aria-label="Buscar na carteira" style="flex:1 1 280px">
+      <div class="chips" id="cartChips"><button class="chip" data-f="todos" aria-pressed="true">Todos</button><button class="chip" data-f="marcados" aria-pressed="false">Marcados</button><button class="chip" data-f="desmarcados" aria-pressed="false">Desmarcados</button><button class="chip" data-f="completo" aria-pressed="false">Completo</button><button class="chip" data-f="falta" aria-pressed="false">Custo faltando</button><button class="chip" data-f="sem" aria-pressed="false">Sem estrutura</button></div>
+    </div>
     <div class="two">
       <div class="tbl-wrap"><table id="cartTbl"></table></div>
       <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
@@ -349,7 +353,7 @@ body{font-size:14px}
     <div style="margin-top:16px">
       <div class="row" style="margin-bottom:10px"><h3 class="grow">Catálogo de insumos comprados</h3><input type="search" id="catSearch" placeholder="Buscar insumo, código ou fornecedor" aria-label="Buscar insumo" style="flex:1 1 280px"></div>
       <div class="tbl-wrap" style="max-height:520px;overflow:auto"><table id="catTbl"></table></div>
-      <p class="note">Preço = valor unitário da NF mais recente. Use esse catálogo no simulador para montar a estrutura de projetos novos.</p>
+      <p class="note">Preço = valor unitário da NF mais recente. Use esse catálogo em Custos para montar a estrutura de projetos novos.</p>
     </div>
   </section>
   <!-- NOTAS -->
@@ -508,7 +512,7 @@ body{font-size:14px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="config.js?v=20261030b"></script>
-<script src="shell.js?v=20261030b"></script>
+<script src="config.js?v=20261030c"></script>
+<script src="shell.js?v=20261030c"></script>
 </body>
 </html>
