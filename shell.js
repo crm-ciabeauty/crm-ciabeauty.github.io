@@ -204,8 +204,8 @@
     window.__NOME = (PERFIL.nome || '').split(' ')[0];
     // abas que este usuário vê
     const ver = new Set(ehGestor() ? ABAS.map((a) => a[0]) : (PERFIL.abas || []).concat(['inicio']));
-    const css = ABAS.filter((a) => !ver.has(a[0])).map((a) => `nav.tabs button[data-tab="${a[0]}"],.hcard[data-go="${a[0]}"],#homePend [data-go="${a[0]}"],.quick [data-go="${a[0]}"]{display:none!important}`).join('\n');
-    const st = document.createElement('style'); st.textContent = css + (ehAdmin() ? '' : '\n.soAdmin{display:none!important}'); document.head.appendChild(st);
+    const css = ABAS.filter((a) => !ver.has(a[0])).map((a) => `nav.tabs button[data-tab="${a[0]}"],#bnav [data-go="${a[0]}"],.hcard[data-go="${a[0]}"],#homePend [data-go="${a[0]}"],.quick [data-go="${a[0]}"]{display:none!important}`).join('\n');
+    const st = document.createElement('style'); st.textContent = css + (ehAdmin() ? '' : '\n.soAdmin{display:none!important}') + (ehGestor() ? '' : '\n.soGestor{display:none!important}'); document.head.appendChild(st);
     const h = location.hash.slice(1); if (h && !ver.has(h)) location.hash = '#inicio';
     window.addEventListener('hashchange', () => { const x = location.hash.slice(1); if (x && !ver.has(x)) location.hash = '#inicio'; });
 
@@ -221,24 +221,50 @@
     document.body.appendChild(s);
   }
 
-  function montarMenuConta() {
-    const foot = document.querySelector('.side .foot'); if (!foot) return;
-    const box = document.createElement('div'); box.className = 'conta';
-    box.innerHTML = (ehGestor() ? '<button class="sbtn" id="btnUsuarios">Usuários</button><button class="sbtn" id="btnBase">Atualizar base</button><button class="sbtn" id="btnConfig">Configurações</button>' : '') + '<button class="sbtn" id="btnSenha">Trocar minha senha</button><button class="sbtn" id="btnSair">Sair</button>';
-    foot.insertBefore(box, foot.firstChild);
-    $('#btnSair').onclick = sair;
-    $('#btnSenha').onclick = () => abrirModal('minhaSenha');
-    if (ehGestor()) { $('#btnUsuarios').onclick = () => { abrirModal('usuarios'); listarUsuarios(); }; $('#btnBase').onclick = () => abrirModal('baseModal'); $('#btnConfig').onclick = abrirConfig; }
-    // celular: atalho para sair/usuários no topo
-    const mb = document.querySelector('.mbrand');
-    if (mb) { const b = document.createElement('button'); b.className = 'btn'; b.style.marginLeft = 'auto'; b.textContent = 'Conta'; b.onclick = () => abrirModal('contaMobile'); mb.appendChild(b); }
-    $('#cmUsuarios').hidden = !ehGestor(); $('#cmBase').hidden = !ehGestor(); $('#cmConfig').hidden = !ehGestor();
-    $('#cmConfig').onclick = () => { fecharModais(); abrirConfig(); };
-    $('#cmUsuarios').onclick = () => { fecharModais(); abrirModal('usuarios'); listarUsuarios(); };
-    $('#cmBase').onclick = () => { fecharModais(); abrirModal('baseModal'); };
-    $('#cmSenha').onclick = () => { fecharModais(); abrirModal('minhaSenha'); };
-    $('#cmSair').onclick = sair;
+  /* ---------------- TEMA (claro / escuro) ---------------- */
+  function temaAtual() { const a = document.documentElement.getAttribute('data-theme'); return a || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+  function aplicarTema(t) {
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    try { if (t === 'auto') localStorage.removeItem('cia-tema'); else localStorage.setItem('cia-tema', t); } catch (e) { /* sem armazenamento */ }
+    marcarTema();
   }
+  function marcarTema() {
+    let salvo = 'auto'; try { salvo = localStorage.getItem('cia-tema') || 'auto'; } catch (e) { /* */ }
+    document.querySelectorAll('#segTema button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.t === salvo));
+    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = temaAtual() === 'dark' ? '#141012' : '#FFF4F9';
+  }
+  document.querySelectorAll('.btnTema').forEach((b) => { b.onclick = () => aplicarTema(temaAtual() === 'dark' ? 'light' : 'dark'); });
+  document.querySelectorAll('#segTema button').forEach((b) => { b.onclick = () => aplicarTema(b.dataset.t); });
+  marcarTema();
+
+  /* ---------------- MENUS: configurações, barra inferior (celular), gaveta ---------------- */
+  function montarMenuConta() {
+    $('#btnCfg').onclick = () => { fecharGaveta(); abrirHub(); };
+    $('#btnCfgM').onclick = abrirHub;
+    $('#hubUsuarios').onclick = () => { fecharModais(); abrirModal('usuarios'); listarUsuarios(); };
+    $('#hubBase').onclick = () => { fecharModais(); abrirModal('baseModal'); };
+    $('#hubBackup').onclick = () => { fecharModais(); abrirConfig(); };
+    $('#hubSenha').onclick = () => { fecharModais(); abrirModal('minhaSenha'); };
+    $('#hubSair').onclick = sair;
+    $('#hubWho').textContent = 'Conectado como ' + (PERFIL.nome || USER.email) + ' · ' + (PAPEIS[PERFIL.papel] || PERFIL.papel);
+    // barra inferior: 4 atalhos + Mais (igual ao CRM imobiliário)
+    const icone = (t) => { const b = document.querySelector('nav.tabs button[data-tab="' + t + '"] svg'); return b ? b.outerHTML : ''; };
+    const atalhos = [['inicio', 'Início'], ['simulador', 'Custos'], ['notas', 'Notas'], ['vendas', 'Vendas']];
+    const mais = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+    $('#bnav').innerHTML = atalhos.map(([t, n]) => `<button type="button" data-go="${t}">${icone(t)}<span>${n}</span></button>`).join('') + `<button type="button" data-go="mais">${mais}<span>Mais</span></button>`;
+    $('#bnav').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-go]'); if (!b) return;
+      if (b.dataset.go === 'mais') { $('.side').classList.contains('open') ? fecharGaveta() : abrirGaveta(); return; }
+      fecharGaveta(); location.hash = '#' + b.dataset.go;
+    });
+    const marcar = () => { const t = location.hash.slice(1) || 'inicio'; const naBarra = atalhos.some((a) => a[0] === t); document.querySelectorAll('#bnav [data-go]').forEach((b) => b.classList.toggle('on', b.dataset.go === t || (b.dataset.go === 'mais' && !naBarra))); };
+    window.addEventListener('hashchange', marcar); marcar();
+    $('#scrim').onclick = fecharGaveta;
+    document.querySelector('nav.tabs').addEventListener('click', (e) => { if (e.target.closest('button')) fecharGaveta(); });
+  }
+  function abrirHub() { fecharModais(); abrirModal('cfgHub'); marcarTema(); }
+  function abrirGaveta() { $('.side').classList.add('open'); $('#scrim').classList.add('on'); }
+  function fecharGaveta() { $('.side').classList.remove('open'); $('#scrim').classList.remove('on'); }
 
   function abrirModal(id) { $('#' + id).hidden = false; }
   function fecharModais() { document.querySelectorAll('.cmodal').forEach((m) => { m.hidden = true; }); }

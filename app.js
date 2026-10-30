@@ -179,7 +179,7 @@ function renderCarteira(){
     const flag=c.semEstrutura?'<span class="pill bad">sem estrutura</span>':c.falta?'<span class="pill warn">custo faltando</span>':'<span class="pill ok">completo</span>';
     return '<tr'+(inc?'':' class="muted"')+'><td><input type="checkbox" data-inc="'+esc(p.id)+'" '+(inc?'checked':'')+' aria-label="Incluir"></td><td><button class="btn ghost" style="color:inherit;padding:0;text-align:left" data-open="'+esc(p.id)+'">'+esc(p.sku)+'</button><div class="note">'+esc(p.colecao)+(p.codigo?' · '+esc(p.codigo):'')+'</div></td><td class="n">'+fmtI.format(c.Q)+'</td><td class="n">'+fmtR.format(c.unit)+'</td><td class="n">'+fmtR0.format(c.desemb)+'</td><td>'+flag+'</td></tr>'}).join('');
   $('#cartTbl').innerHTML='<thead><tr><th></th><th>Projeto</th><th class="n">Qtd</th><th class="n">Custo un.</th><th class="n">Caixa</th><th>Estrutura</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td></td><td>Total da carteira</td><td class="n">'+fmtI.format(TQ)+'</td><td></td><td class="n">'+fmtR0.format(T)+'</td><td></td></tr></tfoot>';
-  const w=$('#cartWarn');if(sem||falta){w.hidden=false;w.textContent=(sem?sem+' projeto(s) sem estrutura entram com R$ 0':'')+(sem&&falta?' e ':'')+(falta?falta+' com custo faltando':'')+'. Abra cada um no simulador para completar e o total fica real.'}else w.hidden=true;
+  const w=$('#cartWarn');if(sem||falta){w.hidden=false;w.textContent=(sem?sem+' projeto(s) sem estrutura entram com R$ 0':'')+(sem&&falta?' e ':'')+(falta?falta+' com custo faltando':'')+'. Abra cada um em Custos para completar e o total fica real.'}else w.hidden=true;
   bars('#cartForn',Object.entries(forn).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,10));
   bars('#cartCol',Object.entries(col).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]));
 }
@@ -512,7 +512,7 @@ function renderInicio(){
   const E=estoqueAtual;let rup=0;if(E){const V=vendasPorCod();E.itens.forEach(i=>{const v=V[i.cod],m=v?mediaMensal(v):0;if(i.qtd<=0||(m&&i.qtd/m<1))rup++})}
   const cards=[
     ['entregas','Entregas',fmtI.format(rec)+' un.',Math.round(ped?rec/ped*100:0)+'% do pedido recebido · '+ag.length+' aguardando'],
-    ['simulador','Simulador de custo',ps.filter(p=>!calc(p).semEstrutura&&!calc(p).falta).length+' completos','custo unitário e caixa por lote'],
+    ['simulador','Custos',ps.filter(p=>!calc(p).semEstrutura&&!calc(p).falta).length+' completos','custo unitário e caixa por lote'],
     ['carteira','Carteira futura',fmtR0.format(des),'necessidade de caixa dos próximos lotes'],
     ['compras','Compras de insumos',fmtR0.format(Object.values(D.comprasMes).reduce((a,b)=>a+b,0)),D.catalogo.length+' insumos no catálogo'],
     ['notas','Notas XML',fmtI.format(nN)+' notas','importar e exportar NF-e'],
