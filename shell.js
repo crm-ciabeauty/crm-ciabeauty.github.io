@@ -296,7 +296,7 @@
       <td><select data-f="papel" ${eu ? 'disabled' : ''}>${Object.entries(PAPEIS).filter(([k]) => k !== 'admin' || ehAdmin() || u.papel === 'admin').map(([k, n]) => `<option value="${k}" ${u.papel === k ? 'selected' : ''}>${n}</option>`).join('')}</select></td>
       <td class="abasCell">${['admin', 'master'].includes(u.papel) ? '<span class="muted">todas</span>' : abasChecks('u', u.abas || [])}</td>
       <td><input type="checkbox" data-f="ativo" ${u.ativo ? 'checked' : ''} ${eu ? 'disabled' : ''} aria-label="Ativo"></td>
-      <td class="acoes">${u.papel === 'admin' && !ehAdmin() ? '<span class="muted">administrador</span>' : `<button class="btn" data-a="salvar">Salvar</button><button class="btn" data-a="senha">Nova senha</button>${u.user_id === USER.id ? '' : '<button class="btn ghost" data-a="excluir">Excluir</button>'}`}</td></tr>`;
+      <td class="acoes">${u.papel === 'admin' && !ehAdmin() ? '<span class="muted">administrador</span>' : `<button class="btn" data-a="salvar">Salvar</button>${u.user_id === USER.id ? '<button class="btn" data-a="minha">Trocar minha senha</button>' : '<button class="btn" data-a="senha">Definir senha</button><button class="btn ghost" data-a="excluir">Excluir</button>'}<span class="novaSenhaBox" hidden><input type="text" class="novaSenhaIn" placeholder="Nova senha (mín. 8)" autocomplete="off" aria-label="Nova senha"><button class="btn" data-a="gerar" type="button">Gerar</button><button class="btn pri" data-a="gravarSenha">Gravar</button></span>`}</td></tr>`;
     }).join('') + '</tbody>';
   }
   $('#tblUsuarios').addEventListener('click', async (e) => {
@@ -309,10 +309,18 @@
         if (tr.querySelector('[data-aba]')) body.abas = abas;
         await chamar(body); m.textContent = 'Alterações salvas.'; listarUsuarios();
       }
-      if (b.dataset.a === 'senha') {
+      if (b.dataset.a === 'minha') { fecharModais(); abrirModal('minhaSenha'); return; }
+      if (b.dataset.a === 'senha') { const box = tr.querySelector('.novaSenhaBox'); box.hidden = !box.hidden; if (!box.hidden) box.querySelector('input').focus(); return; }
+      if (b.dataset.a === 'gerar') {
         const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'; let s = ''; crypto.getRandomValues(new Uint32Array(10)).forEach((x) => { s += c[x % c.length]; });
+        tr.querySelector('.novaSenhaIn').value = s; return;
+      }
+      if (b.dataset.a === 'gravarSenha') {
+        const s = tr.querySelector('.novaSenhaIn').value;
+        if (s.length < 8) { m.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
         await chamar({ acao: 'senha', user_id: id, senha: s });
-        m.innerHTML = 'Nova senha de <b>' + esc(tr.querySelector('.mono').textContent) + '</b>: <span class="mono sel">' + esc(s) + '</span> — copie e passe para a pessoa.';
+        tr.querySelector('.novaSenhaBox').hidden = true; tr.querySelector('.novaSenhaIn').value = '';
+        m.innerHTML = 'Senha de <b>' + esc(tr.querySelector('.mono').textContent) + '</b> alterada para: <span class="mono sel">' + esc(s) + '</span> — passe para a pessoa; ela pode trocar depois em "Trocar minha senha".';
       }
       if (b.dataset.a === 'excluir') {
         if (!b.dataset.ok) { b.dataset.ok = '1'; b.textContent = 'Confirmar exclusão'; setTimeout(() => { if (b.isConnected) { delete b.dataset.ok; b.textContent = 'Excluir'; } }, 3000); return; }
