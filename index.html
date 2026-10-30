@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=25efc33c-8e4f-4653-98ed-497f8a1fb90c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Painel de Projetos Cia Beauty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app com menu lateral preto (abas clicáveis) + área de trabalho rosé; no celular o menu vira barra inferior. Cores da marca: rosa claro, preto e pink de destaque */
+:root{
+  --pink:#FEC2DC; --black:#1A1A1A; --hot:#E0286E;
+  --bg:#FFF5F9; --surface:#ffffff; --sunk:#FCEAF2; --line:#F3D3E1; --fg:#1A1A1A; --muted:#7A6670;
+  --accent:#E0286E; --accent-soft:#FFE1EE; --ink:#1A1A1A;
+  --side-bg:#1A1A1A; --side-fg:#F6E9EF; --side-muted:#A8949E; --side-active:#FEC2DC; --side-active-fg:#1A1A1A;
+  --ok:#1F7A4D; --ok-soft:#DDF2E6; --warn:#A35F00; --warn-soft:#FBEBD3; --bad:#C0263A; --bad-soft:#FBE0E4;
+  --bar-done:#E0286E; --bar-todo:#F8D9E7;
+  --f-display:"Sora",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"DM Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141012; --surface:#1E181B; --sunk:#271F23; --line:#3A2D33; --fg:#F8EEF3; --muted:#B39FA8;
+  --accent:#FF5C99; --accent-soft:#45202F; --ink:#FEC2DC;
+  --side-bg:#0B090A; --side-fg:#F6E9EF; --side-muted:#9C8992; --side-active:#FEC2DC; --side-active-fg:#1A1A1A;
+  --ok:#6BD29F; --ok-soft:#1C3A2B; --warn:#F0B460; --warn-soft:#3E2E15; --bad:#FF8A99; --bad-soft:#4A1F27;
+  --bar-done:#FF5C99; --bar-todo:#3A2D33; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141012; --surface:#1E181B; --sunk:#271F23; --line:#3A2D33; --fg:#F8EEF3; --muted:#B39FA8;
+  --accent:#FF5C99; --accent-soft:#45202F; --ink:#FEC2DC;
+  --side-bg:#0B090A; --side-fg:#F6E9EF; --side-muted:#9C8992; --side-active:#FEC2DC; --side-active-fg:#1A1A1A;
+  --ok:#6BD29F; --ok-soft:#1C3A2B; --warn:#F0B460; --warn-soft:#3E2E15; --bad:#FF8A99; --bad-soft:#4A1F27;
+  --bar-done:#FF5C99; --bar-todo:#3A2D33; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.side{background:var(--side-bg);color:var(--side-fg);display:flex;flex-direction:column;gap:24px;padding-block:22px;padding-inline:16px;position:sticky;top:0;height:100vh;padding-left:max(16px,env(safe-area-inset-left,0px))}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{width:42px;height:42px;border-radius:50%;background:var(--pink);color:#1A1A1A;display:grid;place-items:center;font:700 .95rem var(--f-display);letter-spacing:-.02em;flex:none}
+.brand b{display:block;font:700 1.05rem var(--f-display);letter-spacing:-.01em}
+.brand small{color:var(--side-muted);font-size:.74rem}
+nav.tabs{display:flex;flex-direction:column;gap:4px}
+nav.tabs button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--side-fg);font:500 .95rem var(--f-body);padding:11px 12px;border-radius:10px;cursor:pointer;text-align:left}
+nav.tabs button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+nav.tabs button:hover{background:rgba(254,194,220,.12)}
+nav.tabs button[aria-selected="true"]{background:var(--side-active);color:var(--side-active-fg);font-weight:600}
+.side .foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;font-size:.76rem;color:var(--side-muted)}
+.side .save{color:var(--side-muted)}
+.main{min-width:0;padding-block:22px 48px;padding-left:28px;padding-right:max(24px,env(safe-area-inset-right,0px))}
+header.top{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font-size:1.7rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .v{font-family:var(--f-display);font-size:1.45rem;font-weight:700;line-height:1.1}
+.kpi.hl{background:var(--pink);border-color:var(--pink);color:#1A1A1A}
+.kpi.hl .v{color:#1A1A1A}.kpi.hl .s,.kpi.hl .eyebrow{color:#5a3a48}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;inset:auto 0 0 0;height:auto;z-index:15;flex-direction:row;padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));gap:0}
+  .side .brand,.side .foot{display:none}
+  nav.tabs{flex-direction:row;width:100%;justify-content:flex-start;overflow-x:auto}
+  nav.tabs button{flex:1 0 64px}
+  nav.tabs button{flex-direction:column;gap:3px;font-size:.7rem;padding:7px 4px;justify-content:center;text-align:center}
+  .main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:96px}
+  .mbrand{display:flex!important}
+}
+.mbrand{display:none;align-items:center;gap:10px;margin-bottom:12px}
+*{box-sizing:border-box}[hidden]{display:none!important}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.2rem}
+h3{font-size:1rem}
+.num,td.n,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.save{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}
+.kpi .s{font-size:.78rem;color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grow{flex:1 1 auto}
+input[type=text],input[type=number],input[type=search],select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0}
+input[type=number]{font-family:var(--f-mono);text-align:right}
+.btn{font:600 .85rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:7px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted);padding:4px 8px}
+.btn.ghost:hover{color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 .8rem var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:4px 10px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th{text-align:left;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--sunk);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th.n,td.n{text-align:right;white-space:nowrap}
+td.mono{white-space:nowrap}
+tfoot td{font-weight:600;background:var(--sunk)}
+.pill{display:inline-block;font-size:.72rem;font-weight:600;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.neu{background:var(--sunk);color:var(--muted)}
+.prog{height:6px;background:var(--bar-todo);border-radius:3px;overflow:hidden;min-width:80px}
+.prog>i{display:block;height:100%;background:var(--bar-done)}
+.coltiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.tile{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.tile .big{font-family:var(--f-mono);font-size:1.05rem}
+.sim{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.sim{grid-template-columns:1fr}}
+.plist{max-height:640px;overflow:auto;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+@media (max-width:860px){.plist{max-height:300px}}
+.pitem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:9px 12px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.pitem:hover{background:var(--sunk)}
+.pitem[aria-current="true"]{background:var(--accent-soft)}
+.pitem .nm{font-weight:500;font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pitem .cd{font-family:var(--f-mono);font-size:.74rem;color:var(--muted)}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.res .box{background:var(--sunk);border-radius:8px;padding:10px 12px}
+.res .box .v{font-family:var(--f-display);font-size:1.3rem;font-weight:700}
+.res .box.hl .v{color:var(--accent)}
+.ed td input[type=number]{width:90px}
+.ed td input[type=text]{width:100%;min-width:160px}
+.searchbox{position:relative}
+.sugg{position:absolute;z-index:5;left:0;right:0;top:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;max-height:300px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.sugg button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;padding:8px 10px;cursor:pointer}
+.sugg button:hover,.sugg button:focus{background:var(--sunk)}
+.note{font-size:.8rem;color:var(--muted)}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);padding:8px 12px;border-radius:0 6px 6px 0;font-size:.84rem;margin:10px 0}
+.two{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:4px 10px;align-items:center;font-size:.82rem}
+.hbar .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .b{grid-column:1/-1;height:6px;background:var(--bar-todo);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.hbar .b i{display:block;height:100%;background:var(--accent)}
+svg text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
+.chk{display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(10,6,14,.45);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.modal .panel{width:min(460px,100%);display:flex;flex-direction:column;gap:10px}
+.modal label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.prog>i,.hbar .b i{transition:width .3s ease}}
+.drop{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border:2px dashed var(--accent);background:var(--accent-soft);border-radius:16px;padding:28px 16px;cursor:pointer}
+.drop.over{background:var(--pink);color:#1A1A1A}
+.drop svg{width:34px;height:34px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.drop b{font:600 1.05rem var(--f-display)}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.hcard{display:flex;flex-direction:column;gap:8px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;min-width:0}
+.hcard:hover{border-color:var(--accent);box-shadow:0 6px 18px rgba(224,40,110,.10)}
+.hcard .ic{width:40px;height:40px;border-radius:12px;background:var(--pink);color:#1A1A1A;display:grid;place-items:center}
+.hcard .ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.hcard b{font:600 1.05rem var(--f-display)}
+.hcard .big{font:700 1.35rem var(--f-display)}
+.hcard .go{margin-top:auto;font-size:.8rem;color:var(--accent);font-weight:600}
+.pend{display:flex;flex-direction:column;gap:8px}
+.pend button{display:flex;gap:10px;align-items:flex-start;text-align:left;font:inherit;color:inherit;background:var(--sunk);border:0;border-radius:10px;padding:10px 12px;cursor:pointer}
+.pend button:hover{background:var(--accent-soft)}
+.quick{display:flex;flex-wrap:wrap;gap:8px}
+.who{display:flex;align-items:center;gap:8px;color:var(--side-fg);font-size:.8rem}
+.who .av{width:26px;height:26px;border-radius:50%;background:var(--pink);color:#1A1A1A;display:grid;place-items:center;font-weight:700;font-size:.75rem;flex:none}
+.ro .drop,.ro #btnNovo,.ro [data-del],.ro [data-rm],.ro [data-tg],.ro #addManual,.ro #venLimpar,.ro #resetP,.ro #delProj,.ro .searchbox,.ro #copyFrom{display:none!important}
+.ro #editor input,.ro #cartTbl input{pointer-events:none;opacity:.75}
+.audit{font-size:.78rem;color:var(--muted);margin-top:4px}
+
+html,body{margin:0}
+body{font-size:14px}
+.login{min-height:100vh;display:grid;place-items:center;background:var(--bg);padding:24px 16px}
+.lcard{width:min(400px,100%);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 40px rgba(224,40,110,.10)}
+.lcard .mark{width:52px;height:52px;font-size:1.1rem}
+.lcard form{display:flex;flex-direction:column;gap:10px}
+.lcard label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+.lcard input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.lcard .btn{padding:10px 14px}
+.lmsg{font-size:.85rem;color:var(--muted);min-height:1.2em}
+.lmsg.erro{color:var(--bad)}
+.lcard a{color:var(--accent);font-size:.85rem}
+.conta{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.sbtn{background:none;border:1px solid rgba(254,194,220,.25);color:var(--side-fg);font:500 .8rem var(--f-body);padding:7px 10px;border-radius:8px;text-align:left;cursor:pointer}
+.sbtn:hover{background:rgba(254,194,220,.12)}
+.cmodal{position:fixed;inset:0;background:rgba(10,6,14,.45);display:flex;align-items:flex-start;justify-content:center;z-index:30;padding:24px 16px;overflow:auto}
+.cmodal .panel{width:min(1100px,100%);display:flex;flex-direction:column;gap:12px}
+.cmodal.peq .panel{width:min(440px,100%)}
+.cmodal label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+.ck{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:4px;margin-right:8px;font-size:.8rem;color:var(--fg)!important;white-space:nowrap}
+.abasCell{min-width:260px}
+.acoes{white-space:nowrap}
+.acoes .btn{margin:2px}
+.sel{user-select:all;background:var(--accent-soft);padding:2px 6px;border-radius:4px}
+.cmodal input[type=email],.cmodal input[type=password],.cmodal input[type=file],.cmodal input[type=text]{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
+.lcard .brand b{display:block}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:end}
+</style>
+</head>
+<body>
+<div id="login" class="login">
+  <div class="lcard">
+    <div class="brand" style="color:var(--fg)"><div class="mark">C·B</div><div><b style="font:700 1.15rem var(--f-display)">Cia Beauty</b><small style="color:var(--muted)">Painel de Projetos</small></div></div>
+    <form id="loginForm">
+      <label>E-mail<input type="email" id="lEmail" autocomplete="username" required></label>
+      <label>Senha<input type="password" id="lSenha" autocomplete="current-password" required></label>
+      <button class="btn pri" id="btnEntrar">Entrar</button>
+      <a href="#" id="linkReset">Esqueci minha senha</a>
+    </form>
+    <form id="resetForm" hidden>
+      <label>E-mail cadastrado<input type="email" id="rEmail" required></label>
+      <button class="btn pri">Enviar link para nova senha</button>
+      <a href="#" id="linkVoltar">Voltar para o login</a>
+    </form>
+    <form id="novaSenhaForm" hidden>
+      <label>Nova senha<input type="password" id="nSenha" autocomplete="new-password" required></label>
+      <label>Repita a nova senha<input type="password" id="nSenha2" autocomplete="new-password" required></label>
+      <button class="btn pri">Salvar nova senha</button>
+    </form>
+    <form id="baseForm" hidden>
+      <label>Arquivo base_inicial.json<input type="file" id="bArq" accept=".json,application/json"></label>
+      <button class="btn pri">Carregar base</button>
+    </form>
+    <p class="lmsg" id="loginMsg" aria-live="polite"></p>
+  </div>
+</div>
+<div id="appRoot" hidden>
+
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="mark">C·B</div><div><b>Cia Beauty</b><small>Projetos licenciados</small></div></div>
+    <nav class="tabs" role="tablist" aria-label="Seções"><button role="tab" data-tab="inicio" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Início</span></button><button role="tab" data-tab="entregas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>Entregas</span></button><button role="tab" data-tab="simulador" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h1M14 11h1M9 15h1M14 15h1"/></svg><span>Custos</span></button><button role="tab" data-tab="carteira" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 10h18M7 6V4h10v2"/></svg><span>Carteira</span></button><button role="tab" data-tab="compras" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h2l2 12h11l2-8H7"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg><span>Compras</span></button><button role="tab" data-tab="notas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg><span>Notas XML</span></button><button role="tab" data-tab="vendas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Vendas</span></button><button role="tab" data-tab="estoque" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v11H3z"/><path d="M8 20v-6h8v6"/></svg><span>Estoque</span></button></nav>
+    <div class="foot"><div id="whoami" class="who"></div><div class="save" id="saveState"><span class="dot"></span><span>Carregando…</span></div><div>NF de entrada até <span id="upd"></span></div><div>We Premium · Creative House</div></div>
+  </aside>
+  <main class="main">
+  <div class="mbrand"><div class="mark">C·B</div><b style="font:700 1.05rem var(--f-display)">Cia Beauty</b></div>
+  <header class="top">
+    <div><div class="eyebrow" id="tabSub">Cia Beauty · projetos licenciados</div><h1 id="tabTitle">Olá, Michele</h1></div>
+    <div class="row"><button class="btn" id="expAba">Exportar esta aba (.xlsx)</button><button class="btn pri" id="expTudo">Relatório completo (.xlsx)</button></div>
+  </header>
+  <section class="kpis" id="kpis"></section>
+
+  <!-- INICIO -->
+  <section id="tab-inicio">
+    <div class="home-grid" id="homeCards"></div>
+    <div class="two" style="margin-top:16px">
+      <div class="panel"><h3 style="margin-bottom:10px">Pendências</h3><div id="homePend" class="pend"></div></div>
+      <div class="panel"><h3 style="margin-bottom:10px">Atalhos</h3><div class="quick">
+        <button class="btn" data-go="notas">Importar XML de NF-e</button>
+        <button class="btn" data-go="vendas">Importar vendas</button>
+        <button class="btn" data-go="estoque">Importar estoque Stralog</button>
+        <button class="btn" data-go="simulador">Simular um lote</button>
+        <button class="btn" data-act="novo">Novo projeto</button>
+        <button class="btn pri" data-act="rel">Baixar relatório completo</button>
+      </div><p class="note" style="margin-top:10px" id="homeBase"></p></div>
+    </div>
+  </section>
+  <!-- ENTREGAS -->
+  <section id="tab-entregas" hidden>
+    <div class="coltiles" id="colTiles"></div>
+    <div class="row" style="margin-bottom:10px">
+      <input type="search" id="entSearch" class="grow" placeholder="Buscar SKU, código ou fornecedor" aria-label="Buscar">
+      <select id="entStatus" aria-label="Status">
+        <option value="">Todos os status</option><option value="ok">Entregue</option><option value="warn">Parcial</option><option value="bad">Aguardando</option>
+      </select>
+    </div>
+    <div class="tbl-wrap"><table id="entTbl"></table></div>
+    <p class="note">Recebido = envase/montagem concluído (NF da Giudit ou AeC). Linhas marcadas <span class="pill warn">estimado</span> foram ligadas pelo nome do produto na NF, confira. Projetos sem NF de produto acabado aparecem como "Aguardando".</p>
+  </section>
+
+  <!-- SIMULADOR -->
+  <section id="tab-simulador" hidden>
+    <div class="sim">
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+        <input type="search" id="simSearch" placeholder="Filtrar projetos" aria-label="Filtrar projetos">
+        <div class="plist" id="plist"></div>
+        <button class="btn" id="btnNovo">+ Novo projeto</button>
+      </div>
+      <div class="panel" id="editor"></div>
+    </div>
+  </section>
+
+  <!-- CARTEIRA -->
+  <section id="tab-carteira" hidden>
+    <div class="row" style="margin-bottom:12px">
+      <div class="grow"><h2>Desembolso previsto dos próximos lotes</h2><div class="note">Soma dos projetos marcados, com as quantidades e estruturas que você definiu no simulador.</div></div>
+      <button class="btn" id="btnCsv">Exportar CSV</button>
+    </div>
+    <div class="callout" id="cartWarn" hidden></div>
+    <div class="two">
+      <div class="tbl-wrap"><table id="cartTbl"></table></div>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div class="panel"><h3 style="margin-bottom:10px">A pagar por fornecedor</h3><div id="cartForn" class="hbar"></div></div>
+        <div class="panel"><h3 style="margin-bottom:10px">Por coleção</h3><div id="cartCol" class="hbar"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPRAS -->
+  <section id="tab-compras" hidden>
+    <div class="two">
+      <div class="panel"><h3>Compras por mês (NF de entrada)</h3><div class="note" style="margin-bottom:8px">Sem remessas da Stralog.</div><div id="chartMes" style="overflow-x:auto"></div></div>
+      <div class="panel"><h3 style="margin-bottom:10px">Maiores fornecedores</h3><div id="topForn" class="hbar"></div></div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="row" style="margin-bottom:10px"><h3 class="grow">Catálogo de insumos comprados</h3><input type="search" id="catSearch" placeholder="Buscar insumo, código ou fornecedor" aria-label="Buscar insumo" style="flex:1 1 280px"></div>
+      <div class="tbl-wrap" style="max-height:520px;overflow:auto"><table id="catTbl"></table></div>
+      <p class="note">Preço = valor unitário da NF mais recente. Use esse catálogo no simulador para montar a estrutura de projetos novos.</p>
+    </div>
+  </section>
+  <!-- NOTAS -->
+  <section id="tab-notas" hidden>
+    <label class="drop" id="drop" for="fileIn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/></svg>
+      <b>Arraste aqui os XMLs de NF-e, de entrada ou de saída</b>
+      <span class="note">Aceita vários arquivos .xml ou o .zip exportado do Bling. Nota para We Premium, Cia Beauty ou Creative vira entrada; nota emitida por elas para clientes vira saída.</span>
+      <span class="btn pri">Escolher arquivos</span>
+      <input type="file" id="fileIn" accept=".xml,.zip,text/xml,application/zip" multiple hidden>
+    </label>
+    <p class="note" id="impMsg" aria-live="polite"></p>
+    <div class="res" id="notaResumo"></div>
+    <div class="row" style="margin-bottom:10px">
+      <div class="chips" id="notaChips"><button class="chip" data-f="">Todas</button><button class="chip" data-f="entrada">Entradas</button><button class="chip" data-f="saida">Saídas</button></div>
+      <input type="search" id="notaSearch" class="grow" placeholder="Buscar nº, fornecedor, cliente ou produto" aria-label="Buscar notas">
+      <button class="btn" id="expXml">Exportar XML (.zip)</button>
+      <button class="btn" id="expCsv">Exportar itens (CSV)</button>
+    </div>
+    <div class="tbl-wrap"><table id="notasTbl"></table></div>
+    <p class="note">Entradas que ainda não estão na planilha somam no estoque dos insumos de Custos, no Recebido dos projetos e nas Compras. Saídas aparecem na coluna "Saída NF" das Entregas. A exportação respeita o filtro (Entradas, Saídas ou Todas). O CSV sai no formato da aba Entradas.</p>
+  </section>
+  <!-- VENDAS -->
+  <section id="tab-vendas" hidden>
+    <label class="drop" id="venDrop" for="venIn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/></svg>
+      <b>Arraste o relatório de vendas (Excel ou CSV)</b>
+      <span class="note">Relatório de pedidos do Bling, TikTok Shop, Shopee, Mercado Livre ou Nuvemshop. O app procura as colunas de data, código, quantidade, valor e canal.</span>
+      <span class="btn pri">Escolher arquivo</span>
+      <input type="file" id="venIn" accept=".xlsx,.xls,.csv" multiple hidden>
+    </label>
+    <p class="note" id="venMsg" aria-live="polite"></p>
+    <div class="res" id="venResumo"></div>
+    <div class="panel" style="margin-bottom:14px"><h3 style="margin-bottom:8px">Faturamento por mês</h3><div id="venChart" style="overflow-x:auto"></div></div>
+    <div class="row" style="margin-bottom:10px"><div class="chips" id="venChips"></div><input type="search" id="venSearch" class="grow" placeholder="Buscar produto ou código" aria-label="Buscar vendas"><button class="btn ghost" id="venLimpar">Apagar vendas importadas</button></div>
+    <div class="tbl-wrap" style="max-height:620px;overflow:auto"><table id="venTbl"></table></div>
+    <p class="note">As NFs de saída importadas na aba Notas XML também contam como venda (remessas, retornos e devoluções ficam de fora). "% vendido" compara o que saiu com o que já foi recebido do projeto.</p>
+  </section>
+  <!-- ESTOQUE -->
+  <section id="tab-estoque" hidden>
+    <label class="drop" id="estDrop" for="estIn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/></svg>
+      <b>Arraste o relatório de estoque da Stralog (Excel ou CSV)</b>
+      <span class="note">Cada importação substitui a anterior. O app procura as colunas de código, descrição, saldo e, se tiver, lote e validade.</span>
+      <span class="btn pri">Escolher arquivo</span>
+      <input type="file" id="estIn" accept=".xlsx,.xls,.csv" hidden>
+    </label>
+    <p class="note" id="estMsg" aria-live="polite"></p>
+    <p class="note" id="estInfo"></p>
+    <div class="res" id="estResumo"></div>
+    <div class="row" style="margin-bottom:10px"><div class="chips" id="estChips"><button class="chip" data-f="">Todos</button><button class="chip" data-f="proj">Só projetos do painel</button><button class="chip" data-f="rup">Ruptura e zerados</button><button class="chip" data-f="par">Parados</button></div><input type="search" id="estSearch" class="grow" placeholder="Buscar produto, código ou coleção" aria-label="Buscar estoque"></div>
+    <div class="tbl-wrap" style="max-height:640px;overflow:auto"><table id="estTbl"></table></div>
+    <p class="note">Cobertura = estoque ÷ média de venda dos últimos 3 meses com venda.</p>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <form class="panel" id="novoForm">
+    <h2>Novo projeto</h2>
+    <label>Coleção<input type="text" id="nColecao" required placeholder="Ex.: Hello Kitty"></label>
+    <label>Produto / SKU<input type="text" id="nSku" required placeholder="Ex.: Body Splash 200mL"></label>
+    <label>Fornecedor principal<input type="text" id="nForn" placeholder="Ex.: Giudit"></label>
+    <label>Quantidade do pedido<input type="number" id="nQtd" min="0" step="100" value="5000"></label>
+    <label>Copiar estrutura de<select id="nCopy"><option value="">Começar vazio</option></select></label>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="nCancel">Cancelar</button><button class="btn pri">Criar projeto</button></div>
+  </form>
+</div>
+
+<div class="modal" id="copyModal" hidden>
+  <div class="panel">
+    <h2>Exportar relatório</h2>
+    <p class="note" id="copyMotivo"></p>
+    <div class="row" id="copyList"></div>
+    <p class="note" id="copyOk" aria-live="polite"></p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="copyPerm" hidden>Liberar download nas permissões</button><button class="btn" id="copyClose">Fechar</button></div>
+  </div>
+</div>
+</div>
+<div class="cmodal" id="usuarios" hidden>
+  <div class="panel">
+    <div class="row"><h2 class="grow">Usuários</h2><button class="btn" data-fechar>Fechar</button></div>
+    <form id="formNovo" class="panel" style="background:var(--sunk);border:0">
+      <h3>Cadastrar usuário</h3>
+      <div class="formgrid">
+        <label>Nome<input type="text" id="uNome" required></label>
+        <label>E-mail<input type="email" id="uEmail" required></label>
+        <label>Senha inicial<span class="row" style="gap:6px"><input type="password" id="uSenha" minlength="8" required class="grow"><button type="button" class="btn" id="gerarSenha">Gerar</button></span></label>
+        <label>Papel<select id="uPapel"><option value="leitor">Leitor (só consulta)</option><option value="editor">Editor (vê e altera)</option><option value="master">Master (tudo + usuários)</option><option value="admin" class="soAdmin">Administrador do sistema</option></select></label>
+      </div>
+      <div><span class="note">Abas que a pessoa vê:</span><div id="novoAbas" style="margin-top:6px"></div></div>
+      <div class="row"><button class="btn pri">Criar usuário</button><span class="note" id="uMsg" aria-live="polite"></span></div>
+    </form>
+    <p class="note" id="listaMsg" aria-live="polite"></p>
+    <div class="tbl-wrap"><table id="tblUsuarios"></table></div>
+    <p class="note">Leitor só consulta. Editor altera simulações e importa notas, vendas e estoque. Master faz tudo e gerencia usuários. Administrador do sistema também cuida de backup e configurações. Usuário desativado não consegue entrar.</p>
+  </div>
+</div>
+<div class="cmodal peq" id="baseModal" hidden>
+  <form class="panel" id="formBase">
+    <h2>Atualizar base</h2>
+    <p class="note">Envie um novo arquivo base_inicial.json quando a planilha Geral ou as estruturas forem atualizadas. As simulações, notas, vendas e estoque já salvos continuam.</p>
+    <label>Arquivo<input type="file" id="bArq2" accept=".json,application/json"></label>
+    <p class="note" id="bMsg" aria-live="polite"></p>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-fechar>Fechar</button><button class="btn pri">Enviar</button></div>
+  </form>
+</div>
+<div class="cmodal" id="configModal" hidden>
+  <div class="panel">
+    <div class="row"><h2 class="grow">Configurações · Backup</h2><button class="btn" data-fechar>Fechar</button></div>
+    <div class="panel" style="background:var(--sunk);border:0">
+      <h3>Backup completo no seu computador</h3>
+      <p class="note">Baixa um arquivo .zip com a base, as simulações, notas, vendas, estoque, usuários e todos os XMLs. Guarde fora do sistema (pasta do computador, Google Drive). Recomendado: uma vez por semana.</p>
+      <p class="note" id="bkUltimo"></p>
+      <div class="row"><button class="btn pri" id="bkBaixar">Baixar backup completo</button><span class="note" id="bkMsg" aria-live="polite"></span></div>
+    </div>
+    <div class="panel" style="background:var(--sunk);border:0">
+      <h3>Cópias automáticas no banco</h3>
+      <p class="note">Todo dia às 03:00 o sistema guarda uma cópia da base, simulações, notas, vendas e estoque (os XMLs não mudam, por isso ficam fora). São mantidas as últimas 14 cópias automáticas.</p>
+      <div class="row"><button class="btn" id="bkAgora">Criar cópia agora</button><span class="note" id="bkMsg2" aria-live="polite"></span></div>
+      <div class="tbl-wrap"><table id="tblBackups"></table></div>
+    </div>
+    <div class="panel soAdmin" style="background:var(--sunk);border:0">
+      <h3>Restaurar de um arquivo de backup</h3>
+      <p class="note">Use só se precisar recuperar o sistema (por exemplo, num projeto novo). Substitui a base, simulações, notas, vendas, estoque e XMLs pelo conteúdo do arquivo. Antes, uma cópia do estado atual é guardada automaticamente. Os usuários não são recriados.</p>
+      <div class="row"><input type="file" id="bkArq" accept=".zip"><button class="btn" id="bkRestArq">Restaurar arquivo</button><span class="note" id="bkMsg3" aria-live="polite"></span></div>
+    </div>
+  </div>
+</div>
+<div class="cmodal peq" id="minhaSenha" hidden>
+  <form class="panel" id="formMinhaSenha">
+    <h2>Trocar minha senha</h2>
+    <label>Nova senha<input type="password" id="ms1" autocomplete="new-password" required></label>
+    <label>Repita a nova senha<input type="password" id="ms2" autocomplete="new-password" required></label>
+    <p class="note" id="msMsg" aria-live="polite"></p>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="btn" data-fechar>Fechar</button><button class="btn pri">Salvar</button></div>
+  </form>
+</div>
+<div class="cmodal peq" id="contaMobile" hidden>
+  <div class="panel">
+    <h2>Conta</h2>
+    <button class="btn" id="cmUsuarios">Usuários</button>
+    <button class="btn" id="cmBase">Atualizar base</button>
+    <button class="btn" id="cmConfig">Configurações e backup</button>
+    <button class="btn" id="cmSenha">Trocar minha senha</button>
+    <button class="btn" id="cmSair">Sair</button>
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-fechar>Fechar</button></div>
+  </div>
+</div>
+<script id="data" type="application/json"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="config.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>
