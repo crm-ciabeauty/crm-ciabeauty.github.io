@@ -12,7 +12,7 @@ create table if not exists public.perfis (
   nome text not null default '',
   email text not null default '',
   papel text not null default 'leitor' check (papel in ('admin','master','editor','leitor')),
-  abas text[] not null default array['inicio','entregas','simulador','carteira','compras','notas','vendas','estoque'],
+  abas text[] not null default array['inicio','entregas','simulador','produtos','carteira','compras','notas','vendas','estoque'],
   ativo boolean not null default true,
   criado_em timestamptz not null default now()
 );
