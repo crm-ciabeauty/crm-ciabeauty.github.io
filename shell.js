@@ -4,7 +4,7 @@
   const C = window.CIA_CONFIG || {};
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const ABAS = [['inicio', 'Início'], ['entregas', 'Entregas'], ['simulador', 'Custos'], ['carteira', 'Carteira'], ['compras', 'Compras'], ['notas', 'Notas XML'], ['vendas', 'Vendas'], ['estoque', 'Estoque']];
+  const ABAS = [['inicio', 'Início'], ['entregas', 'Entregas'], ['simulador', 'Custos'], ['produtos', 'Produtos'], ['carteira', 'Carteira'], ['compras', 'Compras'], ['notas', 'Notas XML'], ['vendas', 'Vendas'], ['estoque', 'Estoque']];
   const PAPEIS = { admin: 'Administrador do sistema', master: 'Master (tudo + usuários)', editor: 'Editor (vê e altera)', leitor: 'Leitor (só consulta)' };
 
   if (!C.SUPABASE_URL || /SEU-PROJETO/.test(C.SUPABASE_URL) || !C.SUPABASE_ANON_KEY || /COLE/.test(C.SUPABASE_ANON_KEY)) {

@@ -501,7 +501,7 @@ const REL={
     Object.entries(cols).forEach(([k,c])=>L.push([k,c[0],c[1],c[2],c[1]?R2(c[2]/c[1]*100):0]));return L}
 };
 const ABA_NOME={resumo:'Resumo',entregas:'Entregas',estruturas:'Custos - Estruturas',carteira:'Carteira',compras:'Compras',notas:'Notas XML',vendas:'Vendas',estoque:'Estoque Stralog'};
-const TAB_REL={inicio:['resumo'],entregas:['entregas'],simulador:['estruturas'],carteira:['carteira'],compras:['compras'],notas:['notas'],vendas:['vendas'],estoque:['estoque']};
+const TAB_REL={inicio:['resumo'],entregas:['entregas'],simulador:['estruturas'],produtos:['estruturas'],carteira:['carteira'],compras:['compras'],notas:['notas'],vendas:['vendas'],estoque:['estoque']};
 function montarXlsx(chaves){const wb=XLSX.utils.book_new();chaves.forEach(k=>{const rows=REL[k]();const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=(rows.find(r=>r.length>3)||rows[0]||[]).map((_,i)=>({wch:Math.min(48,Math.max(10,...rows.slice(0,200).map(r=>String(r[i]==null?'':r[i]).length+2)))}));XLSX.utils.book_append_sheet(wb,ws,ABA_NOME[k].slice(0,31))});
   return new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
 async function exportar(chaves,nome,btn){ULT_EXPORT=chaves;if(!window.XLSX){btn.textContent='Leitor de planilhas não carregou';return}const old=btn.textContent;btn.textContent='Gerando…';
@@ -546,13 +546,134 @@ function renderInicio(){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b&&b.closest('#tab-inicio')){if(b.dataset.pid)cur=b.dataset.pid;showTab(b.dataset.go);return}
   const a=e.target.closest('[data-act]');if(a&&a.closest('#tab-inicio')){if(a.dataset.act==='novo')$('#btnNovo').click();if(a.dataset.act==='rel')$('#expTudo').click()}});
 /* ---------- abas ---------- */
-const tabs=['inicio','entregas','simulador','carteira','compras','notas','vendas','estoque'];
-const LBL={"inicio": ["Início", "Cia Beauty · projetos licenciados"], "entregas": ["Entregas", "Status de recebimento por projeto"], "simulador": ["Custos", "Custo e necessidade de caixa por lote"], "carteira": ["Carteira", "Desembolso dos próximos lotes"], "compras": ["Compras", "Insumos comprados nas NFs de entrada"], "notas": ["Notas XML", "Importar e exportar NF-e de entrada e saída"], "vendas": ["Vendas", "Vendas por produto, canal e mês"], "estoque": ["Estoque", "Estoque atual no armazém Stralog"]};
-function showTab(t){if(!tabs.includes(t))t='inicio';$('#kpis').hidden=t!=='inicio';$('#tabTitle').textContent=t==='inicio'?('Olá'+(window.__NOME?', '+window.__NOME:'')):LBL[t][0]==='Custos'?'Custos':LBL[t][0]==='Carteira'?'Carteira futura':LBL[t][0]==='Compras'?'Compras de insumos':LBL[t][0]==='Notas XML'?'Notas fiscais (XML)':LBL[t][0]==='Estoque'?'Estoque Stralog':LBL[t][0]==='Vendas'?'Vendas':'Entregas';$('#tabSub').textContent=LBL[t][1];window.scrollTo(0,0);document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));tabs.forEach(x=>$('#tab-'+x).hidden=x!==t);if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);renderAll()}
+const tabs=['inicio','entregas','simulador','produtos','carteira','compras','notas','vendas','estoque'];
+const LBL={"inicio": ["Início", "Cia Beauty · projetos licenciados"], "entregas": ["Entregas", "Status de recebimento por projeto"], "simulador": ["Custos", "Custo e necessidade de caixa por lote"], "produtos": ["Produtos", "Do que cada produto é feito: insumos, fornecedores e lote"], "carteira": ["Carteira", "Desembolso dos próximos lotes"], "compras": ["Compras", "Insumos comprados nas NFs de entrada"], "notas": ["Notas XML", "Importar e exportar NF-e de entrada e saída"], "vendas": ["Vendas", "Vendas por produto, canal e mês"], "estoque": ["Estoque", "Estoque atual no armazém Stralog"]};
+function showTab(t){if(!tabs.includes(t))t='inicio';$('#kpis').hidden=t!=='inicio';$('#tabTitle').textContent=t==='inicio'?('Olá'+(window.__NOME?', '+window.__NOME:'')):LBL[t][0]==='Custos'?'Custos':LBL[t][0]==='Produtos'?'Produtos':LBL[t][0]==='Carteira'?'Carteira futura':LBL[t][0]==='Compras'?'Compras de insumos':LBL[t][0]==='Notas XML'?'Notas fiscais (XML)':LBL[t][0]==='Estoque'?'Estoque Stralog':LBL[t][0]==='Vendas'?'Vendas':'Entregas';$('#tabSub').textContent=LBL[t][1];window.scrollTo(0,0);document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));tabs.forEach(x=>$('#tab-'+x).hidden=x!==t);if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);renderAll()}
 document.querySelector('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)});
 window.addEventListener('hashchange',()=>showTab(location.hash.slice(1)));
-function renderAll(){renderKpis();const t=tabs.find(x=>!$('#tab-'+x).hidden);if(t==='inicio')renderInicio();if(t==='entregas')renderEntregas();if(t==='simulador')renderSim();if(t==='carteira')renderCarteira();if(t==='compras')renderCompras();if(t==='notas')renderNotas();if(t==='vendas')renderVendas();if(t==='estoque')renderEstoque()}
+function renderAll(){renderKpis();const t=tabs.find(x=>!$('#tab-'+x).hidden);if(t==='inicio')renderInicio();if(t==='entregas')renderEntregas();if(t==='simulador')renderSim();if(t==='produtos')renderProdutos(true);if(t==='carteira')renderCarteira();if(t==='compras')renderCompras();if(t==='notas')renderNotas();if(t==='vendas')renderVendas();if(t==='estoque')renderEstoque()}
 document.addEventListener('click',e=>{if(!e.target.closest('.searchbox')){const s=$('#sugg');if(s)s.hidden=true}});
+
+
+/* ---------- PRODUTOS: árvore produto → insumos → fornecedores (só leitura; usa calc() da aba Custos) ---------- */
+const PD_TIPOS={
+  frasco:['Frasco','--t-prim','<path d="M10 3h4v3l2 2v12a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8l2-2z"/><path d="M8 12h8"/>'],
+  valvula:['Válvula','--t-prim','<path d="M9 9h6v12H9z"/><path d="M10 9V6h6l3 2"/><path d="M12 6V4"/>'],
+  tampa:['Tampa','--t-prim','<rect x="6" y="9" width="12" height="11" rx="2"/><path d="M8 9V6h8v3M9 13v4M12 13v4M15 13v4"/>'],
+  batoque:['Batoque','--t-prim','<path d="M8 6h8l-1 5H9z"/><path d="M10 11v7a2 2 0 0 0 4 0v-7"/>'],
+  rotulo:['Rótulo','--t-deco','<path d="M3 12l9-9h8v8l-9 9z"/><circle cx="16" cy="8" r="1.5"/>'],
+  envase:['Envase','--t-cont','<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/>'],
+  materia:['Matéria-prima','--t-cont','<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 14h9"/>'],
+  caixa:['Caixa de embarque','--t-sec','<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>'],
+  cartucho:['Cartucho','--t-sec','<rect x="5" y="3" width="14" height="18" rx="1"/><rect x="8" y="7" width="8" height="7" rx="1"/>'],
+  montagem:['Montagem','--t-serv','<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'],
+  acessorio:['Acessório','--t-prim','<path d="M12 8c-2-4-8-4-8 0s6 4 8 0c2 4 8 4 8 0s-6-4-8 0z"/><path d="M12 8v12"/>'],
+  outro:['Insumo','--t-serv','<circle cx="12" cy="12" r="8"/>']
+};
+const pdNorm=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function pdTipo(nome){const s=pdNorm(nome);for(const [k,t] of [['rotulo','rotulo'],['fita','rotulo'],['envase','envase'],['materia','materia'],['caixa','caixa'],['cartucho','cartucho'],['montagem','montagem'],['scrunchie','acessorio'],['frasco','frasco'],['valvula','valvula'],['gatilho','valvula'],['spray','valvula'],['pump','valvula'],['tampa','tampa'],['batoque','batoque']])if(s.includes(k))return PD_TIPOS[t];return PD_TIPOS.outro}
+const pdPct=new Intl.NumberFormat('pt-BR',{style:'percent',maximumFractionDigits:1});
+const pdR3=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:3});
+const pdDt=s=>s?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(2,4):'—';
+const pdNomeCurto=p=>String(p.sku||'').replace(/^(TWEETY X DEBORAH SECCO|MORANGUINHO X THAIS FERSOZA|BT21)\s+/i,'').replace(/\s+/g,' ').trim()||p.sku;
+let PD={col:'',q:'',cur:null,sel:null,forn:null,fotos:{},site:[],gestor:false,ligado:false,trocar:false};
+const PD_CAT={};(D.catalogo||[]).forEach(c=>{if(!PD_CAT[c[0]])PD_CAT[c[0]]=c});
+async function pdLigar(){
+  if(PD.ligado||!window.claude||!claude.use)return;PD.ligado=true;
+  try{const u=await claude.use('user');if(u)PD.gestor=!!(await u.isOwner())}catch(e){}
+  try{const d=await claude.use('db');if(!d)return;
+    d.collection('fotos').onSnapshot(s=>{const f={};s.docs.forEach(x=>{f[x.id]=x.data()});PD.fotos=f;if(!$('#tab-produtos').hidden)renderProdutos(false)});
+    d.doc('fotos_site/catalogo').onSnapshot(s=>{PD.site=(s.exists&&s.data().itens)||[]});
+  }catch(e){}
+}
+function pdFoto(p,cls){const f=PD.fotos[p.id];return f&&f.url?'<img class="'+(cls||'')+'" src="'+esc(f.url)+'" alt="'+esc(p.sku)+'" loading="lazy">':'<span class="pd-semfoto">'+esc((p.colecao||'?').slice(0,2).toUpperCase())+'</span>'}
+function pdHist(cod){if(!cod||cod==='?')return[];const h=[];Object.values(notas).forEach(n=>{(n.itens||[]).forEach(it=>{if(it[0]===cod)h.push({d:n.data,nf:n.num,f:n.emit,q:it[3],u:it[4]})})});return h.sort((a,b)=>a.d<b.d?1:-1).slice(0,8)}
+function pdCalc(p){const k=calc(p);let unit=0;k.linhas.forEach(l=>{l.coef=+l.c.coef||0;l.un=l.coef*(l.cu||0);unit+=l.un});k.linhas.forEach(l=>{l.pct=unit?l.un/unit:0});return k}
+function renderProdutos(animar){
+  pdLigar();
+  const todos=allProjects();const cols=[...new Set(todos.map(p=>p.colecao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  if(PD.col&&!cols.includes(PD.col))PD.col='';
+  $('#pdCols').innerHTML=['<button class="chip" data-col="" aria-pressed="'+(!PD.col)+'">Todas</button>'].concat(cols.map(c=>'<button class="chip" data-col="'+esc(c)+'" aria-pressed="'+(PD.col===c)+'">'+esc(c)+' <span class="muted">'+todos.filter(p=>p.colecao===c).length+'</span></button>')).join('');
+  const qq=pdNorm(PD.q).split(/\s+/).filter(Boolean);
+  const lista=todos.filter(p=>(!PD.col||p.colecao===PD.col)&&(!qq.length||qq.every(t=>pdNorm([p.sku,p.id,p.codigo,p.colecao].concat(comps(p).map(c=>c.forn+' '+c.nome)).join(' ')).includes(t))));
+  if(!PD.cur||!byId(PD.cur))PD.cur=(lista[0]||todos[0]||{}).id||null;
+  $('#pdGrid').innerHTML=lista.length?lista.map(p=>{const k=pdCalc(p);let u=0;k.linhas.forEach(l=>u+=l.un);return '<button class="pd-card" data-p="'+esc(p.id)+'" aria-current="'+(p.id===PD.cur)+'"><span class="pd-ph">'+pdFoto(p)+'</span><b>'+esc(pdNomeCurto(p))+'</b><span class="pd-meta"><span class="num">'+esc(p.id)+'</span><span class="num">'+(k.semEstrutura?'sem estrutura':pdR3.format(u)+'/un')+'</span></span></button>'}).join(''):'<p class="note">Nenhum produto encontrado.</p>';
+  pdMontar(!!animar);pdPainel();
+}
+function pdMontar(animar){
+  const st=$('#pdStage');const p=byId(PD.cur);if(!p){st.innerHTML='';return}
+  const k=pdCalc(p);let unit=0;k.linhas.forEach(l=>unit+=l.un);
+  st.className='pd-stage';
+  st.innerHTML='<svg class="pd-wires" aria-hidden="true"></svg><button class="pd-hub" id="pdHub" aria-label="Resumo do produto">'+pdFoto(p)+'</button><div class="pd-cap" id="pdCap">'+esc(pdNomeCurto(p))+'<span>'+(k.semEstrutura?'sem estrutura cadastrada':pdR3.format(unit)+' por unidade')+'</span></div>'+
+    (k.semEstrutura?'<div class="pd-vazio">Este produto ainda não tem insumos cadastrados. Monte a estrutura na aba Custos.</div>':'')+
+    k.linhas.map((l,i)=>{const t=pdTipo(l.c.nome);return '<button class="pd-node" data-i="'+i+'" style="--i:'+i+';--tc:var('+t[1]+')" aria-pressed="false"><span class="pd-hd"><span class="pd-ic"><svg viewBox="0 0 24 24">'+t[2]+'</svg></span><span class="pd-nm">'+esc(l.c.nome)+'</span></span><span class="pd-fo">'+esc(short(l.c.forn)||'Fornecedor não informado')+'</span><span class="pd-vl">'+(l.cu==null?'<span class="pill bad">custo faltando</span>':'<span class="num">'+pdR3.format(l.un)+'</span>')+'<span class="num muted">'+pdPct.format(l.pct)+'</span></span><span class="pd-bar"><i style="width:'+(l.pct*100).toFixed(1)+'%"></i></span></button>'}).join('');
+  pdLayout();
+  if(animar){st.classList.remove('anim');void st.offsetWidth;st.classList.add('anim')}
+  pdMarcar();
+}
+function pdLayout(){
+  const st=$('#pdStage');if(!st||!st.isConnected||$('#tab-produtos').hidden)return;const nodes=[...st.querySelectorAll('.pd-node')];const W=st.clientWidth;const hub=$('#pdHub'),cap=$('#pdCap');if(!hub)return;
+  const lista=W<720||!nodes.length;st.classList.toggle('lista',lista);st.querySelectorAll('.pd-trilho').forEach(t=>t.remove());
+  if(lista){st.style.height='';if(nodes.length){const z=nodes[nodes.length-1];const t=document.createElement('div');t.className='pd-trilho';const y0=hub.offsetTop+hub.offsetHeight;t.style.top=y0+'px';t.style.height=Math.max(0,z.offsetTop+z.offsetHeight/2-y0)+'px';st.prepend(t)}return}
+  const n=nodes.length;const H=n>7?660:560;st.style.height=H+'px';const cx=W/2,cy=H/2;
+  hub.style.left=(cx-95)+'px';hub.style.top=(cy-110)+'px';cap.style.left=(cx-110)+'px';cap.style.top=(cy+90)+'px';
+  const rx=Math.min(W/2-100,420),ry=H/2-58,nw=168;const svg=st.querySelector('svg.pd-wires');svg.setAttribute('viewBox','0 0 '+W+' '+H);let paths='';
+  nodes.forEach((el,i)=>{const ang=-Math.PI/2+(i+.5)*(2*Math.PI/n)-Math.PI/n*.5;const x=cx+rx*Math.cos(ang),y=cy+ry*Math.sin(ang);const h=el.offsetHeight;
+    const L=Math.max(8,Math.min(W-nw-8,x-nw/2)),T=Math.max(8,Math.min(H-h-8,y-h/2));el.style.left=L+'px';el.style.top=T+'px';
+    const ex=L+nw/2,ey=T+h/2;el.style.setProperty('--dx',(cx-ex)+'px');el.style.setProperty('--dy',(cy-20-ey)+'px');
+    const mx=(cx+ex)/2+(ey-cy)*.15,my=(cy-20+ey)/2-(ex-cx)*.15;paths+='<path data-i="'+i+'" style="--i:'+i+';--len:'+(Math.hypot(ex-cx,ey-cy)*1.15).toFixed(0)+'" d="M'+cx+' '+(cy-20)+' Q'+mx.toFixed(1)+' '+my.toFixed(1)+' '+ex.toFixed(1)+' '+ey.toFixed(1)+'"/>'});
+  svg.innerHTML=paths;
+}
+function pdMarcar(){const st=$('#pdStage');st.querySelectorAll('.pd-node').forEach(n=>n.setAttribute('aria-pressed',String(+n.dataset.i===PD.sel)));st.querySelectorAll('.pd-wires path').forEach(p=>p.classList.toggle('on',+p.dataset.i===PD.sel))}
+function pdPainel(){
+  const el=$('#pdPainel');const p=byId(PD.cur);if(!p){el.innerHTML='<p class="note">Escolha um produto.</p>';return}
+  const k=pdCalc(p);let unit=0;k.linhas.forEach(l=>unit+=l.un);const site=PD.fotos[p.id]&&PD.fotos[p.id].site;
+  if(PD.forn){
+    const dep=[];allProjects().forEach(x=>{if(comps(x).some(c=>(c.forn||'').trim()===PD.forn))dep.push(x)});dep.sort((a,b)=>(a.colecao||'').localeCompare(b.colecao||'')||a.sku.localeCompare(b.sku));
+    let g='';el.innerHTML='<div><div class="eyebrow">Fornecedor</div><h2>'+esc(short(PD.forn))+'</h2></div><div class="pd-kv"><div><small>Produtos que dependem dele</small><b>'+dep.length+'</b></div><div><small>Coleções</small><b>'+new Set(dep.map(x=>x.colecao)).size+'</b></div></div><p class="note">Se este fornecedor atrasar, estes projetos ficam sem o insumo. Toque num produto para abri-lo.</p><div class="pd-dep">'+dep.map(x=>{const cab=x.colecao!==g?'<div class="g">'+esc(x.colecao)+'</div>':'';g=x.colecao;return cab+'<button class="i'+(x.id===p.id?' here':'')+'" data-abrir="'+esc(x.id)+'">'+esc(pdNomeCurto(x))+' <span class="muted num">'+esc(x.id)+'</span></button>'}).join('')+'</div><button class="btn" data-pd="volta">← Voltar ao insumo</button>';return;
+  }
+  if(PD.trocar){
+    const it=PD.site||[];el.innerHTML='<div><div class="eyebrow">Foto do produto</div><h2>'+esc(pdNomeCurto(p))+'</h2></div><input type="search" id="pdFotoBusca" placeholder="Buscar no site Cia Beauty" aria-label="Buscar foto no site"><div class="pd-fotos" id="pdFotos">'+pdFotosLista('')+'</div><div class="row"><button class="btn" data-pd="semfoto">Deixar sem foto</button><button class="btn" data-pd="cancelaFoto">Cancelar</button></div>'+(it.length?'':'<p class="note">Lista do site ainda não carregada.</p>');
+    $('#pdFotoBusca').addEventListener('input',e=>{$('#pdFotos').innerHTML=pdFotosLista(e.target.value)});return;
+  }
+  if(PD.sel==null||!k.linhas[PD.sel]){
+    const L=k.linhas.slice().sort((a,b)=>b.un-a.un);
+    el.innerHTML='<div><div class="eyebrow">'+esc(p.id)+' · '+esc(p.colecao||'')+'</div><h2>'+esc(pdNomeCurto(p))+'</h2></div>'+
+      '<div class="pd-kv"><div><small>Custo por unidade</small><b>'+pdR3.format(unit)+'</b></div><div><small>Insumos</small><b>'+k.linhas.length+(k.falta?' <span class="pill bad">'+k.falta+' sem custo</span>':'')+'</b></div><div><small>Lote a produzir</small><b>'+fmtI.format(k.Q)+' un</b></div><div><small>Desembolso do lote</small><b>'+fmtR0.format(k.desemb)+'</b></div></div>'+
+      (L.length?'<div><h3 style="margin-bottom:8px">De onde vem o custo</h3><div class="pd-comp">'+L.filter(l=>l.un>0).map(l=>'<i style="--tc:var('+pdTipo(l.c.nome)[1]+');width:'+(l.pct*100).toFixed(2)+'%" title="'+esc(l.c.nome)+'"></i>').join('')+'</div></div><div class="pd-leg">'+L.map(l=>'<div style="--tc:var('+pdTipo(l.c.nome)[1]+')"><i class="sw"></i><span>'+esc(l.c.nome)+'</span><span class="num">'+(l.cu==null?'—':pdR3.format(l.un))+'</span><span class="num muted">'+pdPct.format(l.pct)+'</span></div>').join('')+'</div>':'')+
+      '<p class="note">Pedido '+fmtI.format(total(p))+' · recebido '+fmtI.format(p.rec||0)+'. Os números seguem a aba Custos (quantidade e abatimento de estoque definidos lá).</p>'+
+      '<div class="row"><button class="btn pri" data-pd="custos">Editar em Custos</button>'+(site?'<a class="btn" href="'+esc(site)+'" target="_blank" rel="noopener">Ver no site</a>':'')+(PD.gestor?'<button class="btn" data-pd="trocarFoto">Trocar foto</button>':'')+'</div>';
+    return;
+  }
+  const l=k.linhas[PD.sel],c=l.c,t=pdTipo(c.nome),cat=PD_CAT[c.cod],hist=pdHist(c.cod);
+  el.innerHTML='<div class="pd-tit" style="--tc:var('+t[1]+')"><span class="pd-ic"><svg viewBox="0 0 24 24">'+t[2]+'</svg></span><div style="min-width:0"><div class="eyebrow">'+esc(t[0])+(c.cod&&c.cod!=='?'?' · <span class="num">'+esc(c.cod)+'</span>':'')+'</div><h2 style="font-size:1.1rem">'+esc(c.nome)+'</h2></div></div>'+
+    (c.forn?'<div class="pd-forn"><div style="min-width:0"><div class="eyebrow">Fornecedor</div><b>'+esc(short(c.forn))+'</b></div><button class="btn" data-pd="forn">Quem depende dele</button></div>':'<div class="pd-forn"><b>Fornecedor não informado</b></div>')+
+    '<div class="pd-kv"><div><small>Custo un.</small><b>'+(l.cu==null?'—':pdR3.format(l.cu))+'</b></div><div><small>Consumo por produto</small><b class="num">'+l.coef.toLocaleString('pt-BR',{maximumFractionDigits:4})+'</b></div><div><small>No custo do produto</small><b>'+(l.cu==null?'—':pdR3.format(l.un))+'</b></div><div><small>Participação</small><b>'+pdPct.format(l.pct)+'</b></div></div>'+
+    '<div><h3 style="margin-bottom:8px">Lote de '+fmtI.format(k.Q)+' unidades</h3><div class="pd-kv"><div><small>Precisa</small><b>'+fmtI.format(l.nec)+'</b></div><div><small>Tem em estoque</small><b>'+fmtI.format(l.est)+'</b></div><div><small>Comprar</small><b>'+fmtI.format(l.comprar)+'</b></div><div><small>Desembolso</small><b>'+(l.cu==null?'—':fmtR0.format(l.v))+'</b></div></div></div>'+
+    (cat?'<div><h3 style="margin-bottom:6px">Última compra</h3><p class="note" style="margin:0">'+pdDt(cat[5])+' · '+fmtI.format(cat[3])+' un a '+pdR3.format(cat[4])+'<br>'+esc(cat[1])+'</p></div>':'<p class="note">Sem compra registrada nas notas para este código.</p>')+
+    (hist.length?'<div><h3 style="margin-bottom:6px">Notas fiscais (XML)</h3><div class="tbl-wrap"><table><thead><tr><th>Data</th><th>NF</th><th class="n">Qtd</th><th class="n">Preço</th></tr></thead><tbody>'+hist.map(h=>'<tr><td>'+pdDt(h.d)+'</td><td class="mono">'+esc(h.nf)+'</td><td class="n">'+fmtI.format(h.q)+'</td><td class="n">'+pdR3.format(h.u)+'</td></tr>').join('')+'</tbody></table></div></div>':'')+
+    '<button class="btn" data-pd="resumo">← Resumo do produto</button>';
+}
+function pdFotosLista(q){const t=pdNorm(q).split(/\s+/).filter(Boolean);const it=(PD.site||[]).filter(s=>t.every(x=>pdNorm(s.nome).includes(x))).slice(0,60);return it.map((s,i)=>'<button class="pd-fpick" data-img="'+esc(s.img)+'" data-site="'+esc('https://ciabeauty.com.br/produtos/'+s.slug+'/')+'" data-nome="'+esc(s.nome)+'"><img src="'+esc(s.img)+'" alt="" loading="lazy"><span>'+esc(s.nome)+'</span></button>').join('')||'<p class="note">Nada encontrado.</p>'}
+async function pdSalvarFoto(dados){try{const d=await claude.use('db');if(dados)await d.collection('fotos').doc(PD.cur).set(dados);else await d.collection('fotos').doc(PD.cur).delete();if(dados)PD.fotos[PD.cur]=dados;else delete PD.fotos[PD.cur];PD.trocar=false;renderProdutos(false);setSave('ok','Foto salva')}catch(e){setSave('warn','Não salvou a foto')}}
+$('#pdCols').addEventListener('click',e=>{const b=e.target.closest('[data-col]');if(!b)return;PD.col=b.dataset.col;PD.sel=null;PD.forn=null;PD.trocar=false;PD.cur=null;renderProdutos(true)});
+$('#pdBusca').addEventListener('input',e=>{PD.q=e.target.value;renderProdutos(false)});
+$('#pdGrid').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;PD.cur=b.dataset.p;PD.sel=null;PD.forn=null;PD.trocar=false;renderProdutos(true);if(innerWidth<980)$('#pdStage').scrollIntoView({behavior:'smooth',block:'start'})});
+$('#pdStage').addEventListener('click',e=>{const n=e.target.closest('.pd-node');if(n){const i=+n.dataset.i;PD.sel=PD.sel===i?null:i;PD.forn=null;PD.trocar=false;pdMarcar();pdPainel();if(innerWidth<980&&PD.sel!=null)$('#pdPainel').scrollIntoView({behavior:'smooth',block:'start'});return}
+  if(e.target.closest('#pdHub')){PD.sel=null;PD.forn=null;PD.trocar=false;pdMontar(true);pdPainel()}});
+$('#pdPainel').addEventListener('click',e=>{const a=e.target.closest('[data-pd],[data-abrir],.pd-fpick');if(!a)return;
+  if(a.dataset.abrir){PD.cur=a.dataset.abrir;PD.sel=null;PD.forn=null;renderProdutos(true);return}
+  if(a.classList.contains('pd-fpick')){pdSalvarFoto({url:a.dataset.img,site:a.dataset.site,nome_site:a.dataset.nome,origem:'manual'});return}
+  const k=a.dataset.pd,p=byId(PD.cur),kk=pdCalc(p);
+  if(k==='forn'){PD.forn=(kk.linhas[PD.sel].c.forn||'').trim();pdPainel()}
+  if(k==='volta'){PD.forn=null;pdPainel()}
+  if(k==='resumo'){PD.sel=null;pdMarcar();pdPainel()}
+  if(k==='custos'){cur=PD.cur;showTab('simulador')}
+  if(k==='trocarFoto'){PD.trocar=true;pdPainel()}
+  if(k==='cancelaFoto'){PD.trocar=false;pdPainel()}
+  if(k==='semfoto')pdSalvarFoto(null);
+});
+let pdRT;new ResizeObserver(()=>{clearTimeout(pdRT);pdRT=setTimeout(()=>{pdLayout();pdMarcar()},60)}).observe($('#pdStage'));
 
 showTab(location.hash.slice(1)||'inicio');
 setSave('warn','Salvo só neste navegador');
