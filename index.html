@@ -241,7 +241,14 @@ body{font-size:14px}
 :root{--t-prim:#E5207C;--t-deco:#8B4FD8;--t-cont:#0F8C7E;--t-sec:#C0710E;--t-serv:#6E6470;--wire:#F1B3D0;--photo:#FFFFFF;--stage:#FFFFFF}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--t-prim:#FF5AA8;--t-deco:#B48CF2;--t-cont:#4CC9B6;--t-sec:#F0B460;--t-serv:#B39FA8;--wire:#6B3550;--stage:#1A1417}}
 :root[data-theme="dark"]{--t-prim:#FF5AA8;--t-deco:#B48CF2;--t-cont:#4CC9B6;--t-sec:#F0B460;--t-serv:#B39FA8;--wire:#6B3550;--stage:#1A1417}
-.pd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;max-height:560px;overflow:auto;padding:2px;margin-bottom:16px}
+.pd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:2px;margin-bottom:16px}
+.pd-modal{position:fixed;inset:0;z-index:50;background:rgba(10,6,14,.55);overflow:auto;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.pd-mbox{background:var(--bg);border-radius:22px;max-width:1440px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.pd-mtop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pd-mtop h2{font-size:1.25rem}
+.pd-mtop .btn{white-space:nowrap;flex:none}
+@media (prefers-reduced-motion:no-preference){.pd-modal:not([hidden]) .pd-mbox{animation:pdAbre .3s ease-out both}}
+@keyframes pdAbre{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
 .pd-card{display:flex;flex-direction:column;gap:8px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;cursor:pointer;min-width:0}
 .pd-card:hover{border-color:var(--accent)}
 .pd-card[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
@@ -314,7 +321,7 @@ body{font-size:14px}
 .pd-fpick img{aspect-ratio:1;width:100%;object-fit:contain;background:var(--photo);border-radius:8px}
 .pd-fpick span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pd-painel a.btn{text-decoration:none;display:inline-block}
-@media (max-width:860px){.pd-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none}}
+@media (max-width:860px){.pd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-modal{padding:0}.pd-mbox{border-radius:0;min-height:100dvh;padding:calc(12px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}.pd-mtop{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:8px}}
 
 </style>
 </head>
@@ -408,9 +415,14 @@ body{font-size:14px}
     <div class="row" style="margin-bottom:12px"><input type="search" id="pdBusca" placeholder="Buscar produto, código, insumo ou fornecedor" aria-label="Buscar produto" style="flex:1 1 280px"></div>
     <div class="chips" id="pdCols" role="group" aria-label="Coleções" style="margin-bottom:12px"></div>
     <div class="pd-grid" id="pdGrid"></div>
-    <div class="pd-palco">
-      <div class="pd-stage" id="pdStage" aria-live="polite"></div>
-      <aside class="pd-painel" id="pdPainel"></aside>
+    <div class="pd-modal" id="pdModal" hidden role="dialog" aria-modal="true" aria-labelledby="pdMtit">
+      <div class="pd-mbox">
+        <div class="pd-mtop"><div style="min-width:0"><div class="eyebrow" id="pdMcol"></div><h2 id="pdMtit"></h2></div><button class="btn" id="pdFechar" type="button">Fechar ✕</button></div>
+        <div class="pd-palco">
+          <div class="pd-stage" id="pdStage" aria-live="polite"></div>
+          <aside class="pd-painel" id="pdPainel"></aside>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -601,7 +613,7 @@ body{font-size:14px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="config.js?v=20261030d"></script>
-<script src="shell.js?v=20261030d"></script>
+<script src="config.js?v=20261030e"></script>
+<script src="shell.js?v=20261030e"></script>
 </body>
 </html>
