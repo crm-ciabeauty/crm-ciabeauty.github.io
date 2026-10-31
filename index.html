@@ -236,6 +236,8 @@ body{font-size:14px}
 .sel{user-select:all;background:var(--accent-soft);padding:2px 6px;border-radius:4px}
 .cmodal input[type=email],.cmodal input[type=password],.cmodal input[type=file],.cmodal input[type=text]{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
 .lcard .brand b{display:block}
+.empRow{margin:10px 0 4px;gap:8px 12px}
+.empLinha:hover td{background:var(--sunk)}
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;align-items:end}
 /* ---- aba Produtos (árvore do produto) ---- */
 :root{--t-prim:#E5207C;--t-deco:#8B4FD8;--t-cont:#0F8C7E;--t-sec:#C0710E;--t-serv:#6E6470;--wire:#F1B3D0;--photo:#FFFFFF;--stage:#FFFFFF}
@@ -467,7 +469,9 @@ body{font-size:14px}
       <input type="file" id="fileIn" accept=".xml,.zip,text/xml,application/zip" multiple hidden>
     </label>
     <p class="note" id="impMsg" aria-live="polite"></p>
+    <div class="row empRow"><span class="eyebrow">Ver por</span><div class="chips" id="notaEmp" role="group" aria-label="Empresa"></div></div>
     <div class="res" id="notaResumo"></div>
+    <div id="notaEmpTbl" style="margin-bottom:14px"></div>
     <div class="row" style="margin-bottom:10px">
       <div class="chips" id="notaChips"><button class="chip" data-f="">Todas</button><button class="chip" data-f="entrada">Entradas</button><button class="chip" data-f="saida">Saídas</button></div>
       <input type="search" id="notaSearch" class="grow" placeholder="Buscar nº, fornecedor, cliente ou produto" aria-label="Buscar notas">
@@ -475,7 +479,7 @@ body{font-size:14px}
       <button class="btn" id="expCsv">Exportar itens (CSV)</button>
     </div>
     <div class="tbl-wrap"><table id="notasTbl"></table></div>
-    <p class="note">Entradas que ainda não estão na planilha somam no estoque dos insumos de Custos, no Recebido dos projetos e nas Compras. Saídas aparecem na coluna "Saída NF" das Entregas. A exportação respeita o filtro (Entradas, Saídas ou Todas). O CSV sai no formato da aba Entradas.</p>
+    <p class="note">Entradas que ainda não estão na planilha somam no estoque dos insumos de Custos, no Recebido dos projetos e nas Compras. Saídas aparecem na coluna "Saída NF" das Entregas. A exportação respeita os filtros (empresa e Entradas, Saídas ou Todas). O CSV sai no formato da aba Entradas.</p>
   </section>
   <!-- VENDAS -->
   <section id="tab-vendas" hidden>
@@ -486,8 +490,11 @@ body{font-size:14px}
       <span class="btn pri">Escolher arquivo</span>
       <input type="file" id="venIn" accept=".xlsx,.xls,.csv" multiple hidden>
     </label>
+    <div class="row" style="margin-top:8px"><label class="note" for="venEmpArq">Empresa dos próximos arquivos importados</label><select id="venEmpArq"></select></div>
     <p class="note" id="venMsg" aria-live="polite"></p>
+    <div class="row empRow"><span class="eyebrow">Ver por</span><div class="chips" id="venEmp" role="group" aria-label="Empresa"></div></div>
     <div class="res" id="venResumo"></div>
+    <div id="venEmpTbl" style="margin-bottom:14px"></div>
     <div class="panel" style="margin-bottom:14px"><h3 style="margin-bottom:8px">Faturamento por mês</h3><div id="venChart" style="overflow-x:auto"></div></div>
     <div class="row" style="margin-bottom:10px"><div class="chips" id="venChips"></div><input type="search" id="venSearch" class="grow" placeholder="Buscar produto ou código" aria-label="Buscar vendas"><button class="btn ghost" id="venLimpar">Apagar vendas importadas</button></div>
     <div class="tbl-wrap" style="max-height:620px;overflow:auto"><table id="venTbl"></table></div>
@@ -613,7 +620,7 @@ body{font-size:14px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="config.js?v=20261030e"></script>
-<script src="shell.js?v=20261030e"></script>
+<script src="config.js?v=20261030f"></script>
+<script src="shell.js?v=20261030f"></script>
 </body>
 </html>

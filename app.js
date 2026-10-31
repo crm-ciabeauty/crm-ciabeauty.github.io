@@ -291,17 +291,34 @@ function applyNotas(){
   D.comprasMes=mes;D.catalogo=CAT_BASE.concat(Object.values(cat));
   D.projetos.forEach(p=>{const cs=p.envCods||[];const ex=cs.length?Math.min(...cs.map(c=>XIN[c]||0)):0;p.rec=p.rec0+ex});
 }
+/* ---------- GRUPO ECONÔMICO x EMPRESA (só filtra o que as abas Notas e Vendas mostram) ---------- */
+const soDig=s=>String(s||'').replace(/\D/g,'');
+const fmtCnpj=d=>d.length===14?d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5'):d;
+function empRotulo(nome){return WEP.test(nome||'')?'We Premium':/CREATIVE/i.test(nome||'')?'Creative House':/CIA\.?\s*BEAUTY/i.test(nome||'')?'Cia Beauty':short(nome)}
+function empNota(n){const e={doc:soDig(n.emitDoc),nome:n.emit},d={doc:soDig(n.destDoc),nome:n.dest};const nosso=x=>OURS.test(x.nome||'');
+  if(n.tipo==='saida')return nosso(e)?e:(nosso(d)?d:e);return nosso(d)?d:(nosso(e)?e:d)}
+function empresasGrupo(){const m={};Object.values(notas).forEach(n=>{const e=empNota(n);if(e.doc&&OURS.test(e.nome||'')&&!m[e.doc])m[e.doc]={doc:e.doc,nome:empRotulo(e.nome)}});
+  const L=Object.values(m);const cont={};L.forEach(x=>{cont[x.nome]=(cont[x.nome]||0)+1});L.forEach(x=>{if(cont[x.nome]>1)x.nome+=' ('+fmtCnpj(x.doc).slice(-8)+')'});return L.sort((a,b)=>a.nome.localeCompare(b.nome))}
+function empNome(doc){if(!doc)return 'Fora do grupo / não identificada';const e=empresasGrupo().find(x=>x.doc===doc);return e?e.nome:fmtCnpj(doc)}
+let EMP='';try{EMP=localStorage.getItem('ciab-emp')||''}catch(e){}
+function empChips(sel){const L=empresasGrupo();if(EMP&&!L.some(x=>x.doc===EMP))EMP='';
+  $(sel).innerHTML='<button class="chip" data-emp="" aria-pressed="'+(EMP==='')+'">Grupo econômico</button>'+L.map(x=>'<button class="chip" data-emp="'+x.doc+'" aria-pressed="'+(EMP===x.doc)+'" title="CNPJ '+fmtCnpj(x.doc)+'">'+esc(x.nome)+'</button>').join('')}
+function setEmp(d){EMP=d;try{localStorage.setItem('ciab-emp',d)}catch(e){}renderAll()}
 function notasLista(){
   const q=$('#notaSearch').value.trim().toLowerCase();
-  return Object.values(notas).filter(n=>(!notaFiltro||n.tipo===notaFiltro)&&(!q||[n.num,n.emit,n.dest,n.natOp,n.chave].concat(n.itens.map(i=>i[0]+' '+i[1])).join(' ').toLowerCase().includes(q))).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  return Object.values(notas).filter(n=>(!EMP||empNota(n).doc===EMP)&&(!notaFiltro||n.tipo===notaFiltro)&&(!q||[n.num,n.emit,n.dest,n.natOp,n.chave].concat(n.itens.map(i=>i[0]+' '+i[1])).join(' ').toLowerCase().includes(q))).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
 }
 function renderNotas(){
-  const all=Object.values(notas),E=all.filter(n=>n.tipo==='entrada'),S=all.filter(n=>n.tipo==='saida');
+  empChips('#notaEmp');
+  const todas=Object.values(notas),all=todas.filter(n=>!EMP||empNota(n).doc===EMP),E=all.filter(n=>n.tipo==='entrada'),S=all.filter(n=>n.tipo==='saida');
+  {const G={};todas.forEach(n=>{const d=empNota(n).doc;const k=OURS.test(empNota(n).nome||'')?d:'';const g=G[k]||(G[k]={e:0,ev:0,s:0,sv:0});if(n.tipo==='entrada'){g.e++;g.ev+=n.vNF||0}else{g.s++;g.sv+=n.vNF||0}});
+   const ks=Object.keys(G).sort((a,b)=>empNome(a).localeCompare(empNome(b)));const tot=ks.reduce((t,k)=>({e:t.e+G[k].e,ev:t.ev+G[k].ev,s:t.s+G[k].s,sv:t.sv+G[k].sv}),{e:0,ev:0,s:0,sv:0});
+   $('#notaEmpTbl').innerHTML=EMP?'':'<h3 style="margin-bottom:8px">Por empresa do grupo</h3><div class="tbl-wrap"><table><thead><tr><th>Empresa</th><th class="n">Entradas</th><th class="n">Valor entradas</th><th class="n">Saídas</th><th class="n">Valor saídas</th></tr></thead><tbody>'+ks.map(k=>'<tr class="empLinha" data-emp="'+k+'" style="cursor:'+(k?'pointer':'default')+'"><td>'+esc(empNome(k))+(k?' <span class="note mono">'+fmtCnpj(k)+'</span>':'')+'</td><td class="n">'+fmtI.format(G[k].e)+'</td><td class="n">'+fmtR0.format(G[k].ev)+'</td><td class="n">'+fmtI.format(G[k].s)+'</td><td class="n">'+fmtR0.format(G[k].sv)+'</td></tr>').join('')+'</tbody><tfoot><tr><td>Grupo econômico</td><td class="n">'+fmtI.format(tot.e)+'</td><td class="n">'+fmtR0.format(tot.ev)+'</td><td class="n">'+fmtI.format(tot.s)+'</td><td class="n">'+fmtR0.format(tot.sv)+'</td></tr></tfoot></table></div>';}
   const sum=a=>a.reduce((x,n)=>x+(n.vNF||0),0);
-  $('#notaResumo').innerHTML='<div class="box"><div class="eyebrow">Entradas importadas</div><div class="v num">'+E.length+'</div><div class="note">'+fmtR0.format(sum(E))+'</div></div><div class="box"><div class="eyebrow">Saídas importadas</div><div class="v num">'+S.length+'</div><div class="note">'+fmtR0.format(sum(S))+'</div></div><div class="box"><div class="eyebrow">Itens novos no estoque</div><div class="v num">'+fmtI.format(Object.values(XIN).reduce((a,b)=>a+b,0))+'</div><div class="note">un. de entradas fora da planilha</div></div>';
+  $('#notaResumo').innerHTML='<div class="box"><div class="eyebrow">Entradas'+(EMP?' · '+esc(empNome(EMP)):'')+'</div><div class="v num">'+E.length+'</div><div class="note">'+fmtR0.format(sum(E))+'</div></div><div class="box"><div class="eyebrow">Saídas'+(EMP?' · '+esc(empNome(EMP)):'')+'</div><div class="v num">'+S.length+'</div><div class="note">'+fmtR0.format(sum(S))+'</div></div><div class="box"><div class="eyebrow">Itens novos no estoque</div><div class="v num">'+fmtI.format(Object.values(XIN).reduce((a,b)=>a+b,0))+'</div><div class="note">un. de entradas fora da planilha</div></div>';
   document.querySelectorAll('#notaChips .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===notaFiltro));
   const rows=notasLista();
-  if(!all.length){$('#notasTbl').innerHTML='<tbody><tr><td class="muted" style="padding:18px">Nenhuma nota importada ainda. Arraste os XMLs de NF-e (ou o .zip exportado do Bling) na área acima.</td></tr></tbody>';return}
+  if(!all.length){$('#notasTbl').innerHTML='<tbody><tr><td class="muted" style="padding:18px">'+(EMP&&todas.length?'Nenhuma nota desta empresa.</td></tr></tbody>':'Nenhuma nota importada ainda. Arraste os XMLs de NF-e (ou o .zip exportado do Bling) na área acima.</td></tr></tbody>');return}
   let h='<thead><tr><th>Tipo</th><th>Nº</th><th>Emissão</th><th>Emitente</th><th>Destinatário</th><th>Natureza</th><th class="n">Itens</th><th class="n">Valor</th><th></th><th></th></tr></thead><tbody>';
   rows.forEach(n=>{
     h+='<tr class="nrow" data-ch="'+esc(n.chave)+'" style="cursor:pointer"><td><span class="pill '+(n.tipo==='entrada'?'ok':'warn')+'">'+(n.tipo==='entrada'?'Entrada':'Saída')+'</span></td><td class="mono">'+esc(n.num)+'</td><td class="mono">'+(n.data?n.data.split('-').reverse().join('/'):'—')+'</td><td>'+esc(short(n.emit))+'</td><td>'+esc(short(n.dest))+'</td><td class="note">'+esc(n.natOp)+'</td><td class="n">'+n.itens.length+'</td><td class="n">'+fmtR.format(n.vNF||0)+'</td><td>'+(n.cancelada?'<span class="pill bad">cancelada</span> ':'')+(BASE_CH.has(n.chave)?'<span class="pill neu">já na planilha</span>':'')+'</td><td style="white-space:nowrap"><button class="btn ghost" data-tg="'+esc(n.chave)+'" title="Trocar entrada/saída">⇄</button><button class="btn ghost" data-rm="'+esc(n.chave)+'" aria-label="Excluir nota">✕</button></td></tr>';
@@ -338,6 +355,8 @@ const drop=$('#drop');
 ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>{const fs=[...(e.dataTransfer?e.dataTransfer.files:[])];if(fs.length)importFiles(fs)});
+$('#notaEmp').addEventListener('click',e=>{const c=e.target.closest('[data-emp]');if(c)setEmp(c.dataset.emp)});
+$('#notaEmpTbl').addEventListener('click',e=>{const c=e.target.closest('tr[data-emp]');if(c&&c.dataset.emp)setEmp(c.dataset.emp)});
 $('#notaChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;notaFiltro=c.dataset.f;renderNotas()});
 $('#notaSearch').addEventListener('input',renderNotas);
 $('#notasTbl').addEventListener('click',e=>{
@@ -409,21 +428,21 @@ async function importVendas(file){
   try{
     const rows=await lerPlanilha(file);const h=acharColunas(rows,SPEC_VEN);
     if(!h){msg.textContent='Não achei as colunas de código e quantidade. Colunas encontradas: '+(rows[0]||[]).filter(Boolean).join(', ');return}
-    const canalArq=file.name.replace(/\.[^.]+$/,'');
+    const canalArq=file.name.replace(/\.[^.]+$/,'');const empArq=$('#venEmpArq').value||'';
     const linhas=[];rows.slice(h.row+1).forEach(r=>{const c=normK(r[h.map.cod]);const q=num(r[h.map.qtd]);if(!c||!q)return;
-      linhas.push([h.map.data!=null?dataISO(r[h.map.data]):'',c,h.map.desc!=null?String(r[h.map.desc]).trim().slice(0,90):'',q,h.map.valor!=null?num(r[h.map.valor]):0,h.map.canal!=null?String(r[h.map.canal]).trim().slice(0,40):canalArq])});
+      linhas.push([h.map.data!=null?dataISO(r[h.map.data]):'',c,h.map.desc!=null?String(r[h.map.desc]).trim().slice(0,90):'',q,h.map.valor!=null?num(r[h.map.valor]):0,h.map.canal!=null?String(r[h.map.canal]).trim().slice(0,40):canalArq,empArq])});
     if(!linhas.length){msg.textContent='Nenhuma linha de venda com código e quantidade.';return}
     const id='L'+Date.now().toString(36);const partes=[];for(let i=0;i<linhas.length;i+=1500)partes.push(linhas.slice(i,i+1500));
-    vendasLotes[id]={arquivo:file.name,importado:new Date().toISOString().slice(0,10),partes:partes.length,linhas};
+    vendasLotes[id]={arquivo:file.name,importado:new Date().toISOString().slice(0,10),partes:partes.length,linhas,empresa:empArq};
     lsVE();
-    if(db){setSave('','Salvando vendas…');(async()=>{try{for(let i=0;i<partes.length;i++)await db.collection('vendas').doc(id+'-'+i).set({lote:id,arquivo:file.name,importado:vendasLotes[id].importado,parte:i,partes:partes.length,linhas:partes[i]});setSave('ok','Vendas salvas')}catch(e){setSave('warn','Vendas ficaram só neste navegador')}})()}
+    if(db){setSave('','Salvando vendas…');(async()=>{try{for(let i=0;i<partes.length;i++)await db.collection('vendas').doc(id+'-'+i).set({lote:id,arquivo:file.name,importado:vendasLotes[id].importado,parte:i,partes:partes.length,linhas:partes[i],empresa:empArq});setSave('ok','Vendas salvas')}catch(e){setSave('warn','Vendas ficaram só neste navegador')}})()}
     msg.textContent=linhas.length+' linhas de venda lidas de '+file.name+'.';
     renderAll();
   }catch(e){msg.textContent='Não consegui ler o arquivo: '+(e.message||e)}
 }
 function vendasLinhas(){
-  const L=[];Object.values(vendasLotes).forEach(l=>l.linhas.forEach(x=>L.push(x)));
-  Object.values(notas).forEach(n=>{if(n.tipo!=='saida'||n.cancelada)return;if(/remessa|retorno|transfer|devolu|armazen|dep[oó]sito/i.test(n.natOp))return;n.itens.forEach(i=>L.push([n.data,normK(i[0]),i[1],i[3],i[5],'NF '+short(n.dest)]))});
+  const L=[];Object.values(vendasLotes).forEach(l=>l.linhas.forEach(x=>L.push(x.length>6?x:x.concat([l.empresa||'']))));
+  Object.values(notas).forEach(n=>{if(n.tipo!=='saida'||n.cancelada)return;if(/remessa|retorno|transfer|devolu|armazen|dep[oó]sito/i.test(n.natOp))return;n.itens.forEach(i=>L.push([n.data,normK(i[0]),i[1],i[3],i[5],'NF '+short(n.dest),empNota(n).doc]))});
   return L;
 }
 function vendasPorCod(){const V={};vendasLinhas().forEach(([d,c,ds,q,v,cn])=>{const a=V[c]||(V[c]={q:0,v:0,mes:{},desc:ds,canais:{}});a.q+=q;a.v+=v;const m=(d||'').slice(0,7);if(m)a.mes[m]=(a.mes[m]||0)+q;a.canais[cn]=(a.canais[cn]||0)+q});return V}
@@ -431,7 +450,10 @@ function mediaMensal(a){const ms=Object.keys(a.mes).sort();if(!ms.length)return 
 function projPorCod(){const P={};allProjects().forEach(p=>{if(p.codigo)P[normK(p.codigo)]=p});return P}
 function estPorCod(){const E={};(estoqueAtual&&estoqueAtual.itens||[]).forEach(i=>{E[i.cod]=i});return E}
 function renderVendas(){
-  const L=vendasLinhas();const canais={};L.forEach(x=>{canais[x[5]]=(canais[x[5]]||0)+x[3]});
+  empChips('#venEmp');{const sel=$('#venEmpArq');const v=sel.value;sel.innerHTML='<option value="">Grupo / não informada</option>'+empresasGrupo().map(x=>'<option value="'+x.doc+'">'+esc(x.nome)+'</option>').join('');sel.value=[...sel.options].some(o=>o.value===v)?v:(EMP||'')}
+  const LG=vendasLinhas();const L=LG.filter(x=>!EMP||x[6]===EMP);const canais={};L.forEach(x=>{canais[x[5]]=(canais[x[5]]||0)+x[3]});
+  {const G={};LG.forEach(x=>{const k=x[6]||'';const g=G[k]||(G[k]={q:0,v:0});g.q+=x[3];g.v+=x[4]});const ks=Object.keys(G).sort((a,b)=>empNome(a).localeCompare(empNome(b)));const tq=ks.reduce((t,k)=>t+G[k].q,0),tv=ks.reduce((t,k)=>t+G[k].v,0);
+   $('#venEmpTbl').innerHTML=(EMP||!ks.length)?'':'<h3 style="margin-bottom:8px">Por empresa do grupo</h3><div class="tbl-wrap"><table><thead><tr><th>Empresa</th><th class="n">Unidades</th><th class="n">Faturamento</th><th class="n">% do grupo</th></tr></thead><tbody>'+ks.map(k=>'<tr class="empLinha" data-emp="'+k+'" style="cursor:'+(k?'pointer':'default')+'"><td>'+esc(empNome(k))+(k?'':' <span class="note">(planilhas sem empresa)</span>')+'</td><td class="n">'+fmtI.format(G[k].q)+'</td><td class="n">'+fmtR0.format(G[k].v)+'</td><td class="n">'+(tv?(G[k].v/tv*100).toFixed(1).replace('.',',')+'%':'—')+'</td></tr>').join('')+'</tbody><tfoot><tr><td>Grupo econômico</td><td class="n">'+fmtI.format(tq)+'</td><td class="n">'+fmtR0.format(tv)+'</td><td class="n">100%</td></tr></tfoot></table></div>';}
   $('#venChips').innerHTML='<button class="chip" data-c="" aria-pressed="'+(vendaCanal==='')+'">Todos os canais</button>'+Object.entries(canais).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([c])=>'<button class="chip" data-c="'+esc(c)+'" aria-pressed="'+(vendaCanal===c)+'">'+esc(c)+'</button>').join('');
   const F=L.filter(x=>!vendaCanal||x[5]===vendaCanal);
   const q=F.reduce((s,x)=>s+x[3],0),v=F.reduce((s,x)=>s+x[4],0),skus=new Set(F.map(x=>x[1])).size;
@@ -469,6 +491,8 @@ function ligaDrop(zoneSel,inputSel,fn){const z=$(zoneSel);$(inputSel).addEventLi
   ['dragenter','dragover'].forEach(ev=>z.addEventListener(ev,e=>{e.preventDefault();z.classList.add('over')}));['dragleave','drop'].forEach(ev=>z.addEventListener(ev,e=>{e.preventDefault();z.classList.remove('over')}));
   z.addEventListener('drop',e=>{[...(e.dataTransfer?e.dataTransfer.files:[])].forEach(fn)})}
 ligaDrop('#venDrop','#venIn',importVendas);ligaDrop('#estDrop','#estIn',importEstoque);
+$('#venEmp').addEventListener('click',e=>{const c=e.target.closest('[data-emp]');if(c)setEmp(c.dataset.emp)});
+$('#venEmpTbl').addEventListener('click',e=>{const c=e.target.closest('tr[data-emp]');if(c&&c.dataset.emp)setEmp(c.dataset.emp)});
 $('#venChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;vendaCanal=c.dataset.c;renderVendas()});
 $('#venSearch').addEventListener('input',renderVendas);
 $('#estChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;estFiltro=c.dataset.f;renderEstoque()});
@@ -492,7 +516,7 @@ const REL={
     L.push([]);L.push(['Código','Descrição','Fornecedor','Qtd comprada','Último preço (R$)','Última NF']);D.catalogo.slice().sort((a,b)=>String(b[5]).localeCompare(String(a[5]))).forEach(r=>L.push([r[0],r[1],r[2],r[3],r[4],dBR(r[5])]));return L},
   notas:()=>{const L=[['Tipo','Chave','Número','Emissão','Emitente','CNPJ emitente','Destinatário','CNPJ destinatário','Natureza','Valor NF (R$)','Código','Descrição','Unid.','Qtd','Valor un.','Valor total','CFOP','Situação']];
     notasLista().forEach(n=>n.itens.forEach(i=>L.push([n.tipo==='entrada'?'Entrada':'Saída',n.chave,n.num,dBR(n.data),n.emit,n.emitDoc||'',n.dest,n.destDoc||'',n.natOp,R2(n.vNF),i[0],i[1],i[2],i[3],i[4],i[5],i[6],n.cancelada?'Cancelada':(BASE_CH.has(n.chave)?'Já na planilha':'')])));return L},
-  vendas:()=>{const L=[['Data','Código','Descrição','Qtd','Valor (R$)','Canal']];vendasLinhas().forEach(x=>L.push([dBR(x[0]),x[1],x[2],x[3],R2(x[4]),x[5]]));return L},
+  vendas:()=>{const L=[['Data','Código','Descrição','Qtd','Valor (R$)','Canal','Empresa']];vendasLinhas().filter(x=>!EMP||x[6]===EMP).forEach(x=>L.push([dBR(x[0]),x[1],x[2],x[3],R2(x[4]),x[5],empNome(x[6])]));return L},
   estoque:()=>{const V=vendasPorCod(),P=projPorCod();const L=[['Código','Produto','Coleção','Estoque','Venda média/mês','Cobertura (meses)','Lotes']];
     (estoqueAtual&&estoqueAtual.itens||[]).forEach(i=>{const v=V[i.cod],m=v?mediaMensal(v):0,p=P[i.cod];L.push([i.cod,p?p.sku:i.desc,p?p.colecao:'',i.qtd,R2(m),m?R2(i.qtd/m):'',(i.lotes||[]).map(l=>l[0]+(l[2]?' val '+dBR(l[2]):'')).join(' | ')])});return L},
   resumo:()=>{const ps=allProjects();const ped=ps.reduce((a,p)=>a+total(p),0),rec=ps.reduce((a,p)=>a+(p.rec||0),0);let des=0;cartRows().forEach(r=>{if(r.inc)des+=r.c.desemb});
