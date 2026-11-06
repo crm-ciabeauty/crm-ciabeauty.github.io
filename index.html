@@ -359,6 +359,16 @@ body{font-size:14px}
 .fin-inline input,.fin-inline select{font:inherit;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
 .fin-aviso{background:var(--warn-soft);color:var(--fg);border-radius:8px;padding:10px 12px;font-size:.85rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 .fin-sug{font-size:.72rem;color:var(--muted);display:block}
+.fin-tbl td.nat{max-width:170px;min-width:120px}
+.fin-tbl td.sug{white-space:normal;min-width:120px;max-width:170px}
+.fin-tbl td.acao{white-space:normal;min-width:190px}
+.fin-tbl td.acao select{width:100%;margin-bottom:6px;font:inherit;font-size:.8rem;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.fin-tbl td.acao .fin-acts{justify-content:flex-start}
+.fin-pager{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0}
+.fin-pager .grow{flex:1}
+.fin-pager select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+.fin-pager .btn{padding:5px 10px}
+.fin-pager .btn:disabled{opacity:.4;cursor:default}
 .fin-dre td:first-child,.fin-dre th:first-child{position:sticky;left:0;background:var(--surface);z-index:1;min-width:230px;white-space:normal}
 .fin-dre tr.tot td{font-weight:700;background:var(--sunk)}
 .fin-dre tr.tot td:first-child{background:var(--sunk)}
@@ -671,7 +681,7 @@ body{font-size:14px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="config.js?v=20261106c"></script>
-<script src="shell.js?v=20261106c"></script>
+<script src="config.js?v=20261106e"></script>
+<script src="shell.js?v=20261106e"></script>
 </body>
 </html>

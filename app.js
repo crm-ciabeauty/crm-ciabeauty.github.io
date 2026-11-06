@@ -762,7 +762,7 @@ function renderFin(t){
 let finRT=null;function finRealtime(){if(finRT||!window.CIA_SB)return;let tm;finRT=finSB().channel('fin');['fin_titulos','fin_baixas','fin_compensacoes','fin_conferencia','fin_contas'].forEach(tb=>finRT.on('postgres_changes',{event:'*',schema:'public',table:tb},()=>{clearTimeout(tm);tm=setTimeout(()=>{if(FIN.ok)finCarregar(true).then(finRenderAtual)},700)}));finRT.subscribe()}
 
 /* ---------- conferência de notas ---------- */
-const FC={f:'pend',tipo:'',q:'',sel:new Set(),montado:false};
+const FC={f:'pend',tipo:'',q:'',sel:new Set(),montado:false,pg:0,pp:20};try{const v=+localStorage.getItem('ciab-fc-pp');if([15,20,25,30,50].includes(v))FC.pp=v}catch(e){}
 function finSug(n){
   if(n.cancelada)return['nao_gera','Nota cancelada'];
   if(OURS.test(n.emit||'')&&OURS.test(n.dest||''))return['nao_gera','Entre empresas do grupo'];
@@ -774,7 +774,8 @@ function finSug(n){
   if(/venda|compra|industrializa/i.test(nat))return['gera','Natureza: '+nat];
   return['','Sem regra: confira'];
 }
-const finContra=n=>n.tipo==='entrada'?{nome:n.emit,doc:soDig(n.emitDoc)}:{nome:n.dest,doc:soDig(n.destDoc)};
+const finEnt=s=>String(s||'').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+const finContra=n=>n.tipo==='entrada'?{nome:finEnt(n.emit),doc:soDig(n.emitDoc)}:{nome:finEnt(n.dest),doc:soDig(n.destDoc)};
 function finCatPadrao(n){if(n.tipo==='saida')return 'Venda de produtos';return /industrializa|envase|terceiriza/i.test((n.natOp||'')+' '+(n.emit||''))?'Envase e industrialização':'Insumos e embalagens'}
 function finCatSelect(tipo,val,attr){const L=FIN_CATS[tipo].map(x=>x[0]);if(val&&!L.includes(val))L.push(val);return '<select '+attr+'>'+L.map(c=>'<option'+(c===val?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'}
 function finConfLista(){const q=fNorm(FC.q);return Object.values(notas).filter(n=>{
@@ -790,13 +791,13 @@ function finConf(root){
       '<div class="chips" id="fcT"><button class="chip" data-t="">Entradas e saídas</button><button class="chip" data-t="entrada">Entradas</button><button class="chip" data-t="saida">Saídas</button></div>'+
       '<input type="search" id="fcQ" placeholder="Buscar nº, fornecedor, cliente ou natureza" aria-label="Buscar notas"></div>'+
       '<div class="fin-bar" id="fcIni"></div><div id="fcBody"></div>';
-    root.querySelector('#fcF').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;FC.f=b.dataset.f;FC.sel.clear();finConf(root)});
-    root.querySelector('#fcT').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;FC.tipo=b.dataset.t;FC.sel.clear();finConf(root)});
-    root.querySelector('#fcQ').addEventListener('input',e=>{FC.q=e.target.value;finConfCorpo(root)});
-    root.querySelector('#fcEmp').addEventListener('click',e=>{const c=e.target.closest('[data-emp]');if(c){FC.sel.clear();setEmp(c.dataset.emp)}});
+    root.querySelector('#fcF').addEventListener('click',e=>{const b=e.target.closest('[data-f]');if(!b)return;FC.f=b.dataset.f;FC.pg=0;FC.sel.clear();finConf(root)});
+    root.querySelector('#fcT').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;FC.tipo=b.dataset.t;FC.pg=0;FC.sel.clear();finConf(root)});
+    root.querySelector('#fcQ').addEventListener('input',e=>{FC.q=e.target.value;FC.pg=0;finConfCorpo(root)});
+    root.querySelector('#fcEmp').addEventListener('click',e=>{const c=e.target.closest('[data-emp]');if(c){FC.sel.clear();FC.pg=0;setEmp(c.dataset.emp)}});
     root.querySelector('#fcIni').addEventListener('change',e=>{if(e.target.id==='fcIniD'&&e.target.value){const v=e.target.value;finExec(async()=>{const{error}=await finSB().from('config').upsert({chave:'fin_inicio',valor:{data:v}});if(error)throw error;FIN.inicio=v},'Data de início salva')}});
-    root.querySelector('#fcBody').addEventListener('click',e=>finConfClick(e,root));
-    root.querySelector('#fcBody').addEventListener('change',e=>{const c=e.target.closest('[data-ck]');if(c){c.checked?FC.sel.add(c.dataset.ck):FC.sel.delete(c.dataset.ck);finConfBarra(root)}const all=e.target.closest('#fcAll');if(all){root.querySelectorAll('[data-ck]').forEach(x=>{x.checked=all.checked;all.checked?FC.sel.add(x.dataset.ck):FC.sel.delete(x.dataset.ck)});finConfBarra(root)}});
+    root.querySelector('#fcBody').addEventListener('click',e=>{const pg=e.target.closest('[data-pg]');if(pg){FC.pg=+pg.dataset.pg;finConfCorpo(root);root.querySelector('#fcBody').scrollIntoView({block:'start'});return}finConfClick(e,root)});
+    root.querySelector('#fcBody').addEventListener('change',e=>{if(e.target.matches('[data-pp]')){FC.pp=+e.target.value;FC.pg=0;try{localStorage.setItem('ciab-fc-pp',FC.pp)}catch(x){}finConfCorpo(root);return}const c=e.target.closest('[data-ck]');if(c){c.checked?FC.sel.add(c.dataset.ck):FC.sel.delete(c.dataset.ck);finConfBarra(root)}const all=e.target.closest('#fcAll');if(all){root.querySelectorAll('#fcBody [data-ck]').forEach(x=>{x.checked=all.checked;all.checked?FC.sel.add(x.dataset.ck):FC.sel.delete(x.dataset.ck)});finConfBarra(root)}});
   }
   empChips('#fcEmp');
   root.querySelectorAll('#fcF .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===FC.f));
@@ -807,17 +808,17 @@ function finConf(root){
 }
 function finConfBarra(root){const b=root.querySelector('#fcBulk');if(b)b.innerHTML=FC.sel.size?'<b>'+FC.sel.size+' marcada(s)</b> <button class="btn pri" data-bulk="sug">Aplicar a sugestão</button> <button class="btn" data-bulk="nao">Marcar como não gera</button>':'<span class="note">Marque notas para aplicar a sugestão em lote.</span>'}
 function finConfCorpo(root){
-  const L=finConfLista();const max=300;
+  const L=finConfLista();const pp=FC.pp,np=Math.max(1,Math.ceil(L.length/pp));if(FC.pg>=np)FC.pg=np-1;if(FC.pg<0)FC.pg=0;const ini=FC.pg*pp,pagina=L.slice(ini,ini+pp);
   const pode=FC.f==='pend'||FC.f==='antes'||FC.f==='todas';
-  let h='<div class="fin-bar" id="fcBulk"></div><div class="tbl-wrap"><table class="fin-tbl"><thead><tr><th>'+(pode?'<input type="checkbox" id="fcAll" aria-label="Marcar todas">':'')+'</th><th>Tipo</th><th>Nº</th><th>Emissão</th><th>Fornecedor / cliente</th><th>Empresa</th><th>Natureza</th><th class="n">Valor</th><th>Sugestão</th><th>Categoria</th><th></th></tr></thead><tbody>';
-  L.slice(0,max).forEach(n=>{const s=finSug(n),dec=FIN.CF[n.chave],c=finContra(n);const tipo=n.tipo==='entrada'?'pagar':'receber';
+  const pager=(onde)=>'<div class="fin-pager"><label class="note">Notas por página <select data-pp aria-label="Notas por página">'+[15,20,25,30,50].map(n=>'<option'+(n===pp?' selected':'')+'>'+n+'</option>').join('')+'</select></label><span class="note">'+(L.length?(ini+1)+'–'+Math.min(ini+pp,L.length)+' de '+L.length:'0 notas')+'</span><span class="grow"></span><button class="btn" data-pg="0"'+(FC.pg===0?' disabled':'')+' aria-label="Primeira página">«</button><button class="btn" data-pg="'+(FC.pg-1)+'"'+(FC.pg===0?' disabled':'')+'>‹ Anterior</button><span class="note">Página '+(FC.pg+1)+' de '+np+'</span><button class="btn" data-pg="'+(FC.pg+1)+'"'+(FC.pg>=np-1?' disabled':'')+'>Próxima ›</button><button class="btn" data-pg="'+(np-1)+'"'+(FC.pg>=np-1?' disabled':'')+' aria-label="Última página">»</button></div>';
+  let h='<div class="fin-bar" id="fcBulk"></div>'+pager('top')+'<div class="tbl-wrap"><table class="fin-tbl"><thead><tr><th>'+(pode?'<input type="checkbox" id="fcAll" aria-label="Marcar todas">':'')+'</th><th>Tipo</th><th>Nº</th><th>Emissão</th><th>Fornecedor / cliente · empresa</th><th>Natureza</th><th class="n">Valor</th><th>Sugestão</th><th>Categoria e ação</th></tr></thead><tbody>';
+  pagina.forEach(n=>{const s=finSug(n),dec=FIN.CF[n.chave],c=finContra(n);const tipo=n.tipo==='entrada'?'pagar':'receber';
     const nT=dec&&dec.decisao==='gera'?FIN.T.filter(t=>t.nf_chave===n.chave).length:0;
-    h+='<tr data-ch="'+esc(n.chave)+'"><td>'+(!dec?'<input type="checkbox" data-ck="'+esc(n.chave)+'"'+(FC.sel.has(n.chave)?' checked':'')+' aria-label="Marcar nota">':'')+'</td><td><span class="pill '+(n.tipo==='entrada'?'ok':'warn')+'">'+(n.tipo==='entrada'?'Entrada':'Saída')+'</span></td><td class="mono">'+esc(n.num)+'</td><td class="mono">'+fD(n.data)+'</td><td class="wrap">'+esc(short(c.nome))+'</td><td>'+esc(empNome(empNota(n).doc))+'</td><td class="wrap note">'+esc((n.natOp||'').slice(0,60))+'</td><td class="n">'+fmtR.format(n.vNF||0)+'</td>'+
-      '<td><span class="pill '+(s[0]==='gera'?'ok':s[0]==='nao_gera'?'neu':'warn')+'">'+(s[0]==='gera'?'Gera '+(tipo==='pagar'?'a pagar':'a receber'):s[0]==='nao_gera'?'Não gera':'Conferir')+'</span><span class="fin-sug">'+esc(s[1])+'</span></td>'+
-      '<td>'+(dec?esc(dec.decisao==='gera'?(dec.categoria||''):(dec.obs||'')):finCatSelect(tipo,finCatPadrao(n),'data-cat aria-label="Categoria"'))+'</td>'+
-      '<td><div class="fin-acts">'+(dec?(dec.decisao==='gera'?'<span class="pill ok">'+nT+' título(s)</span>':'<span class="pill neu">Não gera</span>')+'<button class="btn ghost" data-a="desfazer">Desfazer</button>':'<button class="btn pri" data-a="gera">Gerar título</button><button class="btn" data-a="nao">Não gera</button>')+'</div></td></tr>'});
-  if(!L.length)h+='<tr><td colspan="11" class="muted" style="padding:16px">Nenhuma nota neste filtro.</td></tr>';
-  h+='</tbody></table></div>'+(L.length>max?'<p class="note">Mostrando as '+max+' mais recentes de '+L.length+'. Use a busca ou os filtros.</p>':'');
+    h+='<tr data-ch="'+esc(n.chave)+'"><td>'+(!dec?'<input type="checkbox" data-ck="'+esc(n.chave)+'"'+(FC.sel.has(n.chave)?' checked':'')+' aria-label="Marcar nota">':'')+'</td><td><span class="pill '+(n.tipo==='entrada'?'ok':'warn')+'">'+(n.tipo==='entrada'?'Entrada':'Saída')+'</span></td><td class="mono">'+esc(n.num)+'</td><td class="mono">'+fD(n.data)+'</td><td class="wrap">'+esc(short(c.nome))+'<span class="fin-sug">'+esc(empNome(empNota(n).doc))+'</span></td><td class="wrap nat note">'+esc((n.natOp||'').slice(0,60))+'</td><td class="n">'+fmtR.format(n.vNF||0)+'</td>'+
+      '<td class="sug"><span class="pill '+(s[0]==='gera'?'ok':s[0]==='nao_gera'?'neu':'warn')+'">'+(s[0]==='gera'?'Gera '+(tipo==='pagar'?'a pagar':'a receber'):s[0]==='nao_gera'?'Não gera':'Conferir')+'</span><span class="fin-sug">'+esc(s[1].length>45?s[1].slice(0,45)+'…':s[1])+'</span></td>'+
+      '<td class="acao">'+(dec?'<span class="fin-sug">'+esc(dec.decisao==='gera'?(dec.categoria||''):(dec.obs||''))+'</span>':finCatSelect(tipo,finCatPadrao(n),'data-cat aria-label="Categoria"'))+'<div class="fin-acts">'+(dec?(dec.decisao==='gera'?'<span class="pill ok">'+nT+' título(s)</span>':'<span class="pill neu">Não gera</span>')+'<button class="btn ghost" data-a="desfazer">Desfazer</button>':'<button class="btn pri" data-a="gera">Gerar título</button><button class="btn" data-a="nao">Não gera</button>')+'</div></td></tr>'});
+  if(!L.length)h+='<tr><td colspan="9" class="muted" style="padding:16px">Nenhuma nota neste filtro.</td></tr>';
+  h+='</tbody></table></div>'+(L.length>pp?pager('bottom'):'');
   root.querySelector('#fcBody').innerHTML=h;finConfBarra(root);
 }
 function finDups(xml,n){const out=[];const re=/<dup>([\s\S]*?)<\/dup>/g;let m;while((m=re.exec(xml))){const g=t=>((new RegExp('<'+t+'>([^<]*)</'+t+'>')).exec(m[1])||[])[1]||'';const v=parseFloat(g('vDup'));if(v>0)out.push({parcela:g('nDup')||String(out.length+1),venc:(g('dVenc')||n.data||fHoje()).slice(0,10),valor:finR(v)})}return out}
