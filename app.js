@@ -856,7 +856,7 @@ function finLista(root,tipo){
   if(!root.querySelector('#flBody')){
     const P=tipo==='pagar';
     root.innerHTML='<div class="fin-bar"><span class="eyebrow">Ver por</span><div class="chips" data-emp-box></div></div><div class="fin-kpis" data-kpis></div><div data-aviso></div>'+
-      '<div class="fin-bar"><button class="btn pri" data-novo="manual">+ Lançamento</button><button class="btn" data-novo="antecipacao">+ Antecipação '+(P?'a fornecedor':'de cliente')+'</button>'+(P?'<button class="btn" data-novo="por_fora">+ Pagamento por fora</button><button class="btn" data-novo="folha">+ Folha (manual)</button><button class="btn" disabled title="Aguardando a planilha modelo do Lala Move">Importar Lala Move</button><button class="btn" disabled title="Aguardando o modelo do resumo da folha">Importar resumo da folha</button>':'')+'</div>'+
+      '<div class="fin-bar"><button class="btn pri" data-novo="manual">+ Lançamento</button><button class="btn" data-novo="antecipacao">+ Antecipação '+(P?'a fornecedor':'de cliente')+'</button>'+(P?'<button class="btn" data-novo="por_fora">+ Pagamento por fora</button><button class="btn" data-novo="folha">+ Folha (manual)</button><button class="btn" data-imp="lalamove">Importar Lala Move</button><button class="btn" data-imp="folha">Importar resumo da folha</button>':'')+'</div>'+
       '<div class="fin-bar"><div class="chips" data-st><button class="chip" data-s="aberto">Em aberto</button><button class="chip" data-s="vencido">Vencidos</button><button class="chip" data-s="quitado">'+(P?'Pagos':'Recebidos')+'</button><button class="chip" data-s="antecip">Antecipações</button><button class="chip" data-s="comp">Podem compensar</button><button class="chip" data-s="todos">Todos</button></div>'+
       '<label class="note">Vencimento de <input type="date" data-de></label><label class="note">até <input type="date" data-ate></label><span data-catbox></span><input type="search" data-q placeholder="Buscar fornecedor, cliente, NF ou descrição" aria-label="Buscar títulos"></div><div id="flBody"></div>';
     root.querySelector('[data-emp-box]').id='flEmp-'+tipo;
@@ -885,7 +885,7 @@ function finListaCorpo(root,tipo){
   let tv=0,tp=0,tc=0,ts=0;
   let h='<div class="tbl-wrap"><table class="fin-tbl"><thead><tr><th>Vencimento</th><th>'+(P?'Fornecedor':'Cliente')+'</th><th>Descrição · categoria</th><th>Empresa</th><th class="n">Valor</th><th class="n">'+(P?'Pago':'Recebido')+'</th><th class="n">Compensado</th><th class="n">Saldo</th><th>Situação</th><th></th></tr></thead><tbody>';
   L.forEach(t=>{tv+=t.valor;tp+=t.pago;tc+=t.origem==='antecipacao'?0:t.comp;ts+=Math.max(0,t.saldo);const disp=finAntecDisp(t);
-    h+='<tr data-id="'+t.id+'"><td class="mono">'+fD(t.vencimento)+'</td><td class="wrap">'+esc(short(t.contraparte)||'—')+'</td><td class="wrap">'+esc(t.descricao||'')+' <span class="pill neu">'+esc(FIN_ORIG[t.origem]||t.origem)+'</span>'+'<span class="fin-sug">'+esc(t.categoria||'Sem categoria')+(t.obs?' · '+esc(t.obs):'')+'</span></td><td>'+esc(empNome(t.empresa_doc||''))+'</td><td class="n">'+fmtR.format(t.valor)+'</td><td class="n">'+fmtR.format(t.pago)+'</td><td class="n">'+(t.origem==='antecipacao'?'<span title="Já usado em notas">'+fmtR.format(t.usado)+'</span>':fmtR.format(t.comp))+'</td><td class="n">'+fmtR.format(Math.max(0,t.saldo))+(t.origem==='antecipacao'&&t.aComp>0.004?'<span class="fin-sug">a compensar '+fmtR.format(t.aComp)+'</span>':'')+'</td><td>'+finSt(t)+'</td>'+
+    h+='<tr data-id="'+t.id+'"><td class="mono">'+fD(t.vencimento)+'</td><td class="wrap">'+esc(short(t.contraparte)||'—')+'</td><td class="wrap">'+esc(t.descricao||'')+' <span class="pill neu">'+esc(FIN_ORIG[t.origem]||t.origem)+'</span>'+'<span class="fin-sug">'+esc(t.categoria||'Sem categoria')+(t.obs?' · '+esc(t.obs):'')+'</span></td><td>'+esc(t.empresa_doc?empNome(t.empresa_doc):'Grupo')+'</td><td class="n">'+fmtR.format(t.valor)+'</td><td class="n">'+fmtR.format(t.pago)+'</td><td class="n">'+(t.origem==='antecipacao'?'<span title="Já usado em notas">'+fmtR.format(t.usado)+'</span>':fmtR.format(t.comp))+'</td><td class="n">'+fmtR.format(Math.max(0,t.saldo))+(t.origem==='antecipacao'&&t.aComp>0.004?'<span class="fin-sug">a compensar '+fmtR.format(t.aComp)+'</span>':'')+'</td><td>'+finSt(t)+'</td>'+
       '<td><div class="fin-acts">'+(t.saldo>0.004?'<button class="btn pri" data-a="baixa">'+(P?'Pagar':'Receber')+'</button>':'')+(disp.length?'<button class="btn" data-a="comp">Compensar</button>':'')+'<button class="btn ghost" data-a="det" aria-label="Detalhes">⋯</button></div></td></tr>';
     if(S.open===t.id)h+='<tr class="det"><td colspan="10">'+finDetalhe(t,S.acao)+'</td></tr>'});
   if(!L.length)h+='<tr><td colspan="10" class="muted" style="padding:16px">Nenhum título neste filtro.</td></tr>';
@@ -903,6 +903,7 @@ function finDetalhe(t,acao){const P=t.tipo==='pagar';let h='';
 function finListaClick(e,root,tipo){
   const S=FL[tipo];
   const nv=e.target.closest('[data-novo]');if(nv){finModal(tipo,nv.dataset.novo,null);return}
+  const imp=e.target.closest('[data-imp]');if(imp){finImport(imp.dataset.imp);return}
   const st=e.target.closest('[data-s]');if(st&&st.closest('[data-st]')){S.st=st.dataset.s;finListaCorpo(root,tipo);return}
   if(e.target.closest('[data-ver-comp]')){S.st='comp';finListaCorpo(root,tipo);return}
   const em=e.target.closest('[data-emp]');if(em&&em.closest('.chips')){setEmp(em.dataset.emp);return}
@@ -1023,6 +1024,73 @@ function finExportar(t,btn){if(!window.XLSX){btn.textContent='Leitor de planilha
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),(LBL[t][0]).slice(0,31));
   const blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   baixar(LBL[t][0].normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\W+/g,'_')+'_'+fHoje()+'.xlsx',blob,btn)}
+
+/* ---------- importar Lala Move e resumo da folha (formato provisório até chegarem os modelos) ---------- */
+const FIMP={
+  lalamove:{titulo:'Importar relatório do Lala Move',arq:'Modelo_Lala_Move.xlsx',
+    spec:{data:[/^data/,/^dia/],pedido:[/pedido|^id|corrida|n[uú]mero/],origem:[/origem|coleta|partida/],destino:[/destino|entrega/],valor:[/^valor|total|pre[cç]o|custo/]},req:['valor'],
+    modelo:[['Data','Pedido','Origem','Destino','Motorista','Valor'],['03/11/2026','EXEMPLO-1001','CD Stralog - Jundiaí','Cliente São Paulo','João','185,90'],['04/11/2026','EXEMPLO-1002','CD Stralog - Jundiaí','Loja Campinas','Maria','142,50'],['05/11/2026','EXEMPLO-1003','Fábrica WB Beauty','CD Stralog - Jundiaí','Pedro','320,00']]},
+  folha:{titulo:'Importar resumo da folha de pagamento',arq:'Modelo_Resumo_Folha.xlsx',
+    spec:{evento:[/evento|descri|rubrica|verba|^item/],valor:[/^valor|total|l[ií]quido/],venc:[/venc/]},req:['evento','valor'],
+    modelo:[['Evento','Valor','Vencimento (opcional)'],['Salários líquidos','42.500,00',''],['Pró-labore líquido','8.000,00',''],['INSS (DCTFWeb)','15.230,40',''],['FGTS (FGTS Digital)','4.180,00',''],['IRRF sobre salários','2.310,75',''],['Vale-transporte','1.250,00','']]}
+};
+const FI={tipo:null,linhas:[],arquivo:'',agrupar:true};
+function finAcharCols(rows,spec,req){for(let r=0;r<Math.min(rows.length,25);r++){const h=rows[r].map(x=>String(x).trim().toLowerCase());const map={};
+  Object.entries(spec).forEach(([k,res])=>{for(const re of res){const i=h.findIndex((c,ix)=>c&&re.test(c)&&!Object.values(map).includes(ix));if(i>=0){map[k]=i;break}}});
+  if(req.every(k=>map[k]!=null))return{row:r,map}}return null}
+const FERIADOS=['01-01','04-21','05-01','09-07','10-12','11-02','11-15','11-20','12-25'];
+function f5Util(compAAAAMM){let d=new Date(fAddMes(compAAAAMM+'-01',1)+'T12:00:00'),n=0;while(true){const w=d.getDay(),md=d.toISOString().slice(5,10);if(w>0&&w<6&&!FERIADOS.includes(md)){n++;if(n===5)break}d.setDate(d.getDate()+1)}return d.toISOString().slice(0,10)}
+function fDia20(compAAAAMM){return fAddMes(compAAAAMM+'-01',1).slice(0,8)+'20'}
+function finFolhaRegra(ev,comp){const s=fNorm(ev);
+  if(/INSS|GPS|DCTF/.test(s))return{cat:'Encargos (INSS, FGTS, IRRF)',quem:'Receita Federal (INSS)',venc:fDia20(comp)};
+  if(/FGTS/.test(s))return{cat:'Encargos (INSS, FGTS, IRRF)',quem:'FGTS Digital',venc:fDia20(comp)};
+  if(/IRRF|IMPOSTO DE RENDA|\bIR\b/.test(s))return{cat:'Encargos (INSS, FGTS, IRRF)',quem:'Receita Federal (IRRF)',venc:fDia20(comp)};
+  if(/PRO ?LABORE/.test(s))return{cat:'Pró-labore',quem:'Sócios',venc:f5Util(comp)};
+  return{cat:'Folha de pagamento',quem:'Funcionários',venc:f5Util(comp)}}
+function finImport(tipo){
+  finModal('pagar','manual',null);const m=$('#finModal');FI.tipo=tipo;FI.linhas=[];FI.arquivo='';const C=FIMP[tipo];
+  const compPad=fAddMes(fHoje().slice(0,7)+'-01',-1).slice(0,7);
+  m.innerHTML='<div class="panel" id="fiPanel"><div class="row"><h2 class="grow">'+esc(C.titulo)+'</h2><button type="button" class="btn" data-fechar-fin>Fechar</button></div>'+
+    '<div class="fin-aviso"><span><b>Formato provisório.</b> Quando chegar o modelo oficial, a leitura das colunas é ajustada. Por enquanto o sistema procura as colunas '+(tipo==='lalamove'?'<b>Data, Pedido, Origem, Destino e Valor</b>':'<b>Evento e Valor</b> (Vencimento é opcional)')+'.</span><button class="btn" type="button" data-fi="modelo">Baixar planilha modelo</button></div>'+
+    '<div class="fin-form"><label>Empresa<select id="fiEmp"><option value="">Grupo / não informada</option>'+empresasGrupo().map(x=>'<option value="'+x.doc+'"'+(x.doc===EMP?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+'</select></label>'+
+    (tipo==='folha'?'<label>Competência<input type="month" id="fiComp" value="'+compPad+'"></label>':
+      '<label>Como lançar<select id="fiAgr"><option value="1">Um título com o total (fatura)</option><option value="0">Um título por corrida</option></select></label><label>Vencimento da fatura<input type="date" id="fiVenc" value="'+fAddDias(fHoje(),7)+'"></label>')+
+    '<label class="full">Arquivo (Excel ou CSV)<input type="file" id="fiArq" accept=".xlsx,.xls,.csv"></label></div>'+
+    '<p class="note" id="fiMsg" aria-live="polite"></p><div id="fiPrev"></div></div>';
+  m.querySelector('#fiArq').onchange=async e=>{const f=e.target.files[0];if(!f)return;const msg=m.querySelector('#fiMsg');msg.textContent='Lendo '+f.name+'…';
+    try{const rows=await lerPlanilha(f);const h=finAcharCols(rows,C.spec,C.req);if(!h){msg.textContent='Não achei as colunas esperadas. Colunas encontradas: '+(rows[0]||[]).filter(Boolean).join(', ');return}
+      FI.arquivo=f.name;FI.linhas=[];rows.slice(h.row+1).forEach(r=>{const g=k=>h.map[k]!=null?r[h.map[k]]:'';const v=finR(num(g('valor')));if(!(v>0))return;
+        if(tipo==='folha'){const ev=String(g('evento')).trim();if(!ev||/^total/i.test(ev))return;FI.linhas.push({ev,valor:v,vencArq:g('venc')?dataISO(g('venc')):'',ok:true})}
+        else{FI.linhas.push({data:g('data')?dataISO(g('data')):fHoje(),pedido:String(g('pedido')).trim(),rota:[g('origem'),g('destino')].map(x=>String(x).trim()).filter(Boolean).join(' → '),valor:v,ok:true})}});
+      msg.textContent=FI.linhas.length+' linha(s) lidas de '+f.name+'.';finImportPrev(m)}catch(err){msg.textContent='Não consegui ler o arquivo: '+(err.message||err)}};
+  m.querySelector('#fiPanel').addEventListener('change',e=>{if(e.target.id==='fiComp'||e.target.id==='fiAgr'||e.target.id==='fiVenc')finImportPrev(m);const ck=e.target.closest('[data-fi-ok]');if(ck){FI.linhas[+ck.dataset.fiOk].ok=ck.checked;finImportPrev(m)}const vv=e.target.closest('[data-fi-venc]');if(vv)FI.linhas[+vv.dataset.fiVenc].venc=vv.value;const cc=e.target.closest('[data-fi-cat]');if(cc)FI.linhas[+cc.dataset.fiCat].cat=cc.value});
+  m.querySelector('#fiPanel').addEventListener('click',e=>{const b=e.target.closest('[data-fi]');if(!b)return;
+    if(b.dataset.fi==='modelo'){if(!window.XLSX)return;const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(C.modelo),'Modelo');baixar(C.arq,new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),b)}
+    if(b.dataset.fi==='gerar')finImportGerar(m,b)});
+  m.hidden=false;
+}
+function finImportLinhas(m){const tipo=FI.tipo;const L=FI.linhas.filter(l=>l.ok);
+  if(tipo==='folha'){const comp=(m.querySelector('#fiComp').value||fHoje().slice(0,7));const cm=comp.slice(5,7)+'/'+comp.slice(0,4);
+    return L.map(l=>{const rg=finFolhaRegra(l.ev,comp);return{contraparte:rg.quem,descricao:l.ev+' · competência '+cm,categoria:l.cat||rg.cat,emissao:fAddDias(fAddMes(comp+'-01',1),-1),vencimento:l.venc||l.vencArq||rg.venc,valor:l.valor,obs:'Importado de '+FI.arquivo}})}
+  const agr=m.querySelector('#fiAgr').value==='1';
+  if(agr){const tot=finR(L.reduce((s,l)=>s+l.valor,0));if(!tot)return[];const ds=L.map(l=>l.data).sort();return[{contraparte:'Lala Move',descricao:'Lala Move · '+L.length+' corrida(s) de '+fD(ds[0])+' a '+fD(ds[ds.length-1]),categoria:'Lala Move',emissao:ds[ds.length-1],vencimento:m.querySelector('#fiVenc').value||fHoje(),valor:tot,obs:'Importado de '+FI.arquivo}]}
+  return L.map(l=>({contraparte:'Lala Move',descricao:'Lala Move'+(l.pedido?' · '+l.pedido:'')+(l.rota?' · '+l.rota:''),categoria:'Lala Move',emissao:l.data,vencimento:l.venc||l.data,valor:l.valor,obs:'Importado de '+FI.arquivo}))}
+function finImportPrev(m){const P=m.querySelector('#fiPrev');if(!FI.linhas.length){P.innerHTML='';return}const tipo=FI.tipo;
+  const comp=tipo==='folha'?(m.querySelector('#fiComp').value||fHoje().slice(0,7)):'';
+  const dup=d=>FIN.T.some(t=>t.origem===FI.tipo&&t.descricao===d.descricao&&Math.abs(t.valor-d.valor)<0.01);
+  let h='<h3 style="margin:6px 0">Linhas do arquivo</h3><div class="tbl-wrap"><table class="fin-tbl"><thead><tr><th></th>'+(tipo==='folha'?'<th>Evento</th><th>Categoria</th><th>Favorecido</th><th>Vencimento</th>':'<th>Data</th><th>Pedido</th><th>Rota</th>')+'<th class="n">Valor</th></tr></thead><tbody>';
+  FI.linhas.forEach((l,i)=>{if(tipo==='folha'){const rg=finFolhaRegra(l.ev,comp);h+='<tr><td><input type="checkbox" data-fi-ok="'+i+'"'+(l.ok?' checked':'')+' aria-label="Incluir"></td><td>'+esc(l.ev)+'</td><td>'+finCatSelect('pagar',l.cat||rg.cat,'data-fi-cat="'+i+'" aria-label="Categoria"')+'</td><td>'+esc(rg.quem)+'</td><td><input type="date" data-fi-venc="'+i+'" value="'+(l.venc||l.vencArq||rg.venc)+'" aria-label="Vencimento"></td><td class="n">'+fmtR.format(l.valor)+'</td></tr>'}
+    else h+='<tr><td><input type="checkbox" data-fi-ok="'+i+'"'+(l.ok?' checked':'')+' aria-label="Incluir"></td><td class="mono">'+fD(l.data)+'</td><td>'+esc(l.pedido)+'</td><td class="wrap">'+esc(l.rota)+'</td><td class="n">'+fmtR.format(l.valor)+'</td></tr>'});
+  const T=finImportLinhas(m),tot=T.reduce((s,t)=>s+t.valor,0),nd=T.filter(dup).length;
+  h+='</tbody><tfoot><tr><td colspan="'+(tipo==='folha'?5:4)+'">'+FI.linhas.filter(l=>l.ok).length+' de '+FI.linhas.length+' linha(s) incluída(s)</td><td class="n">'+fmtR.format(tot)+'</td></tr></tfoot></table></div>'+
+    (nd?'<div class="fin-aviso"><span><b>'+nd+'</b> título(s) parecem já ter sido importados (mesma descrição e valor). Desmarque as linhas se for repetição.</span></div>':'')+
+    '<div class="row" style="margin-top:8px"><button class="btn pri" type="button" data-fi="gerar">Gerar '+T.length+' título(s) a pagar</button><span class="note">'+(tipo==='folha'?'Salários e pró-labore vencem no 5º dia útil; INSS, FGTS e IRRF no dia 20 do mês seguinte à competência. Ajuste na tabela se precisar.':'Os títulos entram em Contas a pagar na categoria Lala Move.')+'</span></div>';
+  P.innerHTML=h}
+async function finImportGerar(m,b){const T=finImportLinhas(m);if(!T.length)return;b.disabled=true;const emp=m.querySelector('#fiEmp').value||null;
+  try{const{error}=await finSB().from('fin_titulos').insert(T.map(t=>Object.assign({tipo:'pagar',origem:FI.tipo,empresa_doc:emp},t)));if(error)throw error;
+    m.hidden=true;await finCarregar(true);finMsg(T.length+' título(s) importado(s)');FL.pagar.st='aberto';finRenderAtual()}
+  catch(err){m.querySelector('#fiMsg').textContent='Não salvou: '+(err.message||err);b.disabled=false}}
+
 finRealtime();
 
 showTab(location.hash.slice(1)||'inicio');
