@@ -1091,6 +1091,13 @@ async function finImportGerar(m,b){const T=finImportLinhas(m);if(!T.length)retur
     m.hidden=true;await finCarregar(true);finMsg(T.length+' título(s) importado(s)');FL.pagar.st='aberto';finRenderAtual()}
   catch(err){m.querySelector('#fiMsg').textContent='Não salvou: '+(err.message||err);b.disabled=false}}
 
+/* menu Financeiro recolhível */
+function finMenu(abrir){const tg=$('#finToggle'),sub=$('#finSub');if(!tg)return;const t=location.hash.slice(1);const ativo=t.startsWith('fin-');
+  let ab=abrir;if(ab==null){try{ab=localStorage.getItem('ciab-fin-aberto')==='1'}catch(e){ab=false}ab=ab||ativo}
+  sub.hidden=!ab;tg.setAttribute('aria-expanded',String(ab));tg.classList.toggle('temAtivo',ativo&&!ab)}
+(function(){const tg=$('#finToggle');if(!tg)return;const alterna=()=>{const ab=$('#finSub').hidden;try{localStorage.setItem('ciab-fin-aberto',ab?'1':'0')}catch(e){}finMenu(ab)};
+  tg.addEventListener('click',alterna);tg.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();alterna()}});
+  window.addEventListener('hashchange',()=>{if(location.hash.startsWith('#fin-'))finMenu(true);else finMenu()});finMenu()})();
 finRealtime();
 
 showTab(location.hash.slice(1)||'inicio');
