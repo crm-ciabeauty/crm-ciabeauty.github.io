@@ -39,7 +39,13 @@ create table if not exists public.fin_titulos (
 );
 create index if not exists fin_titulos_tipo_venc on public.fin_titulos (tipo, vencimento);
 create index if not exists fin_titulos_doc on public.fin_titulos (contraparte_doc);
-create unique index if not exists fin_titulos_nf_parcela on public.fin_titulos (nf_chave, parcela) where nf_chave is not null;
+-- restrição única completa (o upsert do painel usa on conflict (nf_chave, parcela); índice parcial não serve)
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'fin_titulos_nf_parcela') then
+    drop index if exists public.fin_titulos_nf_parcela;
+    alter table public.fin_titulos add constraint fin_titulos_nf_parcela unique (nf_chave, parcela);
+  end if;
+end $$;
 
 create table if not exists public.fin_baixas (
   id uuid primary key default gen_random_uuid(),
