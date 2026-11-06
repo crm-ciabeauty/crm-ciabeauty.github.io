@@ -4,7 +4,7 @@
   const C = window.CIA_CONFIG || {};
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const ABAS = [['inicio', 'Início'], ['entregas', 'Entregas'], ['simulador', 'Custos'], ['produtos', 'Produtos'], ['carteira', 'Carteira'], ['compras', 'Compras'], ['notas', 'Notas XML'], ['vendas', 'Vendas'], ['estoque', 'Estoque']];
+  const ABAS = [['inicio', 'Início'], ['entregas', 'Entregas'], ['simulador', 'Custos'], ['produtos', 'Produtos'], ['carteira', 'Carteira'], ['compras', 'Compras'], ['notas', 'Notas XML'], ['vendas', 'Vendas'], ['estoque', 'Estoque'], ['financeiro', 'Financeiro']];
   const PAPEIS = { admin: 'Administrador do sistema', master: 'Master (tudo + usuários)', editor: 'Editor (vê e altera)', leitor: 'Leitor (só consulta)' };
 
   if (!C.SUPABASE_URL || /SEU-PROJETO/.test(C.SUPABASE_URL) || !C.SUPABASE_ANON_KEY || /COLE/.test(C.SUPABASE_ANON_KEY)) {
@@ -205,9 +205,11 @@
     // abas que este usuário vê
     const ver = new Set(ehGestor() ? ABAS.map((a) => a[0]) : (PERFIL.abas || []).concat(['inicio']));
     const css = ABAS.filter((a) => !ver.has(a[0])).map((a) => `nav.tabs button[data-tab="${a[0]}"],#bnav [data-go="${a[0]}"],.hcard[data-go="${a[0]}"],#homePend [data-go="${a[0]}"],.quick [data-go="${a[0]}"]{display:none!important}`).join('\n');
-    const st = document.createElement('style'); st.textContent = css + (ehAdmin() ? '' : '\n.soAdmin{display:none!important}') + (ehGestor() ? '' : '\n.soGestor{display:none!important}'); document.head.appendChild(st);
-    const h = location.hash.slice(1); if (h && !ver.has(h)) location.hash = '#inicio';
-    window.addEventListener('hashchange', () => { const x = location.hash.slice(1); if (x && !ver.has(x)) location.hash = '#inicio'; });
+    const st = document.createElement('style'); st.textContent = css + (ehAdmin() ? '' : '\n.soAdmin{display:none!important}') + (ehGestor() ? '' : '\n.soGestor{display:none!important}') + (ver.has('financeiro') ? '' : '\n.navFin,nav.tabs button[data-tab^="fin-"],#bnav [data-go^="fin-"]{display:none!important}'); document.head.appendChild(st);
+    const podeAba = (x) => ver.has(/^fin-/.test(x) ? 'financeiro' : x);
+    const h = location.hash.slice(1); if (h && !podeAba(h)) location.hash = '#inicio';
+    window.addEventListener('hashchange', () => { const x = location.hash.slice(1); if (x && !podeAba(x)) location.hash = '#inicio'; });
+    window.CIA_SB = sb; window.CIA_PERFIL = { id: USER.id, email: USER.email, nome: PERFIL.nome || USER.email, papel: PERFIL.papel, gestor: ehGestor(), admin: ehAdmin(), financeiro: ver.has('financeiro') };
 
     // realtime
     sb.channel('registros').on('postgres_changes', { event: '*', schema: 'public', table: 'registros' }, (p) => {
@@ -387,12 +389,15 @@
       const regs = await todasLinhas('registros', 'colecao,id,dados,atualizado_por,atualizado_em', 'id', null);
       const perfis = await todasLinhas('perfis', '*', 'criado_em', null);
       const xmls = await todasLinhas('notas_xml', 'chave,xml,emissao,tp_nf,origem', 'chave', (t) => m('Baixando XMLs… ' + t.split(': ')[1]), 200);
+      m('Lendo o financeiro…');
+      const fin = {}; for (const [k, t, o] of [['contas', 'fin_contas', 'criado_em'], ['titulos', 'fin_titulos', 'criado_em'], ['baixas', 'fin_baixas', 'criado_em'], ['compensacoes', 'fin_compensacoes', 'criado_em'], ['conferencia', 'fin_conferencia', 'chave']]) fin[k] = await todasLinhas(t, '*', o, null);
       m('Montando o arquivo…');
       const z = new JSZip();
       z.file('info.json', JSON.stringify({ sistema: 'Painel Cia Beauty', gerado_em: new Date().toISOString(), por: USER.email, registros: regs.length, xmls: xmls.length }, null, 2));
       z.file('base.json', JSON.stringify(base));
       z.file('registros.json', JSON.stringify(regs));
       z.file('perfis.json', JSON.stringify(perfis, null, 2));
+      z.file('financeiro.json', JSON.stringify(fin));
       z.file('notas_xml_indice.json', JSON.stringify(xmls.map(({ xml, ...r }) => r)));
       xmls.forEach((x) => z.file('xml/' + x.chave + '.xml', x.xml));
       const blob = await z.generateAsync({ type: 'blob', compression: 'DEFLATE' });
@@ -453,6 +458,7 @@
       const rows = [];
       for (const n of arqs) { const chave = n.slice(4, -4); const xml = await z.file(n).async('string'); rows.push(Object.assign(linhaXml(chave, xml, 'base'), meta[chave] ? { origem: meta[chave].origem } : {})); }
       await gravarXmls(rows, m);
+      if (z.file('financeiro.json')) { m('Restaurando o financeiro…'); const { error: ef } = await sb.rpc('fin_restaurar', { f: JSON.parse(await z.file('financeiro.json').async('string')) }); if (ef) throw ef; }
       m('Restaurado. Recarregando…'); setTimeout(() => location.reload(), 900);
     } catch (err) { m('Erro: ' + (err.message || err)); b.disabled = false; }
   };

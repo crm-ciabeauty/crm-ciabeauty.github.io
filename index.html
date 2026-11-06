@@ -325,6 +325,42 @@ body{font-size:14px}
 .pd-painel a.btn{text-decoration:none;display:inline-block}
 @media (max-width:860px){.pd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pd-modal{padding:0}.pd-mbox{border-radius:0;min-height:100dvh;padding:calc(12px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}.pd-mtop{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:8px}}
 
+/* ---- Financeiro ---- */
+.navgrp{font:600 .68rem var(--f-body);text-transform:uppercase;letter-spacing:.1em;color:var(--side-muted);padding:14px 14px 4px;margin-top:6px;border-top:1px solid rgba(255,255,255,.08)}
+.fin-root{display:flex;flex-direction:column;gap:14px}
+.fin-bar .btn:disabled{opacity:.5;cursor:not-allowed}
+.fin-bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+.fin-bar input[type=search]{flex:1 1 220px;min-width:0}
+.fin-bar input[type=date],.fin-bar select,.fin-form input,.fin-form select,.fin-form textarea{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
+.fin-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.fin-kpis .box b{display:block;font:700 1.2rem var(--f-display);font-variant-numeric:tabular-nums}
+.fin-kpis .box.bad b{color:var(--bad)}.fin-kpis .box.warn b{color:var(--warn)}.fin-kpis .box.ok b{color:var(--ok)}
+.fin-tbl td,.fin-tbl th{white-space:nowrap}
+.fin-tbl td.wrap{white-space:normal;min-width:150px;max-width:260px}
+.fin-tbl tr.det>td{background:var(--sunk);white-space:normal}
+.fin-tbl tfoot td{font-weight:700}
+.fin-acts{display:flex;gap:4px;justify-content:flex-end}
+.fin-acts .btn{padding:4px 8px;font-size:.76rem}
+.fin-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.fin-form label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}
+.fin-form .full{grid-column:1/-1}
+.fin-inline{display:flex;flex-wrap:wrap;gap:8px;align-items:end;padding:6px 0}
+.fin-inline label{display:flex;flex-direction:column;gap:3px;font-size:.74rem;color:var(--muted)}
+.fin-inline input,.fin-inline select{font:inherit;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);min-width:0}
+.fin-aviso{background:var(--warn-soft);color:var(--fg);border-radius:8px;padding:10px 12px;font-size:.85rem;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.fin-sug{font-size:.72rem;color:var(--muted);display:block}
+.fin-dre td:first-child,.fin-dre th:first-child{position:sticky;left:0;background:var(--surface);z-index:1;min-width:230px;white-space:normal}
+.fin-dre tr.tot td{font-weight:700;background:var(--sunk)}
+.fin-dre tr.tot td:first-child{background:var(--sunk)}
+.fin-dre tr.cat td:first-child{padding-left:26px;color:var(--muted)}
+.fin-dre tr.grp td:first-child{font-weight:600}
+.fin-dre td.neg{color:var(--bad)}
+.fin-chart{overflow-x:auto}
+.fin-chart svg text{font:11px var(--f-mono);fill:var(--muted)}
+.fin-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.fin-leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+@media (max-width:860px){.fin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 </style>
 </head>
 <body>
@@ -360,7 +396,7 @@ body{font-size:14px}
 <div class="app">
   <aside class="side">
     <div class="brand"><div class="mark">C·B</div><div><b>Cia Beauty</b><small>Projetos licenciados</small></div></div>
-    <nav class="tabs" role="tablist" aria-label="Seções"><button role="tab" data-tab="inicio" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Início</span></button><button role="tab" data-tab="entregas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>Entregas</span></button><button role="tab" data-tab="simulador" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h1M14 11h1M9 15h1M14 15h1"/></svg><span>Custos</span></button><button role="tab" data-tab="produtos" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="5" rx="1.2"/><rect x="2.5" y="16.5" width="6" height="5" rx="1.2"/><rect x="9" y="16.5" width="6" height="5" rx="1.2"/><rect x="15.5" y="16.5" width="6" height="5" rx="1.2"/><path d="M12 7.5v4.5M5.5 16.5V12h13v4.5M12 12v4.5"/></svg><span>Produtos</span></button><button role="tab" data-tab="carteira" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 10h18M7 6V4h10v2"/></svg><span>Carteira</span></button><button role="tab" data-tab="compras" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h2l2 12h11l2-8H7"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg><span>Compras</span></button><button role="tab" data-tab="notas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg><span>Notas XML</span></button><button role="tab" data-tab="vendas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Vendas</span></button><button role="tab" data-tab="estoque" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v11H3z"/><path d="M8 20v-6h8v6"/></svg><span>Estoque</span></button></nav>
+    <nav class="tabs" role="tablist" aria-label="Seções"><button role="tab" data-tab="inicio" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Início</span></button><button role="tab" data-tab="entregas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>Entregas</span></button><button role="tab" data-tab="simulador" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h1M14 11h1M9 15h1M14 15h1"/></svg><span>Custos</span></button><button role="tab" data-tab="produtos" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="5" rx="1.2"/><rect x="2.5" y="16.5" width="6" height="5" rx="1.2"/><rect x="9" y="16.5" width="6" height="5" rx="1.2"/><rect x="15.5" y="16.5" width="6" height="5" rx="1.2"/><path d="M12 7.5v4.5M5.5 16.5V12h13v4.5M12 12v4.5"/></svg><span>Produtos</span></button><button role="tab" data-tab="carteira" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 10h18M7 6V4h10v2"/></svg><span>Carteira</span></button><button role="tab" data-tab="compras" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h2l2 12h11l2-8H7"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg><span>Compras</span></button><button role="tab" data-tab="notas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/></svg><span>Notas XML</span></button><button role="tab" data-tab="vendas" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg><span>Vendas</span></button><button role="tab" data-tab="estoque" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-5 9 5v11H3z"/><path d="M8 20v-6h8v6"/></svg><span>Estoque</span></button><div class="navFin navgrp" role="presentation">Financeiro</div><button role="tab" data-tab="fin-pagar" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg><span>Contas a pagar</span></button><button role="tab" data-tab="fin-receber" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg><span>Contas a receber</span></button><button role="tab" data-tab="fin-conf" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 14l2 2 4-4"/></svg><span>Conferência de notas</span></button><button role="tab" data-tab="fin-dre" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>DRE Financeiro</span></button><button role="tab" data-tab="fin-fluxo" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Fluxo de caixa</span></button></nav>
     <nav class="tabs cfgnav" aria-label="Configurações"><button type="button" id="btnCfg"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Configurações</span></button></nav>
     <div class="foot"><div id="whoami" class="who"></div><div class="save" id="saveState"><span class="dot"></span><span>Carregando…</span></div><div>NF de entrada até <span id="upd"></span></div><div>We Premium · Creative House</div></div>
   </aside>
@@ -428,6 +464,11 @@ body{font-size:14px}
     </div>
   </section>
 
+  <section id="tab-fin-pagar" hidden><div class="fin-root" id="root-fin-pagar"></div></section>
+  <section id="tab-fin-receber" hidden><div class="fin-root" id="root-fin-receber"></div></section>
+  <section id="tab-fin-conf" hidden><div class="fin-root" id="root-fin-conf"></div></section>
+  <section id="tab-fin-dre" hidden><div class="fin-root" id="root-fin-dre"></div></section>
+  <section id="tab-fin-fluxo" hidden><div class="fin-root" id="root-fin-fluxo"></div></section>
   <section id="tab-carteira" hidden>
     <div class="row" style="margin-bottom:12px">
       <div class="grow"><h2>Desembolso previsto dos próximos lotes</h2><div class="note">Soma dos projetos marcados, com as quantidades e estruturas que você definiu em Custos.</div></div>
@@ -620,7 +661,7 @@ body{font-size:14px}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="config.js?v=20261030f"></script>
-<script src="shell.js?v=20261030f"></script>
+<script src="config.js?v=20261106a"></script>
+<script src="shell.js?v=20261106a"></script>
 </body>
 </html>
