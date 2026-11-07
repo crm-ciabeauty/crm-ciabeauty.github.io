@@ -390,7 +390,7 @@
       const perfis = await todasLinhas('perfis', '*', 'criado_em', null);
       const xmls = await todasLinhas('notas_xml', 'chave,xml,emissao,tp_nf,origem', 'chave', (t) => m('Baixando XMLs… ' + t.split(': ')[1]), 200);
       m('Lendo o financeiro…');
-      const fin = {}; for (const [k, t, o] of [['contas', 'fin_contas', 'criado_em'], ['titulos', 'fin_titulos', 'criado_em'], ['baixas', 'fin_baixas', 'criado_em'], ['compensacoes', 'fin_compensacoes', 'criado_em'], ['conferencia', 'fin_conferencia', 'chave']]) fin[k] = await todasLinhas(t, '*', o, null);
+      const fin = {}; for (const [k, t, o] of [['contas', 'fin_contas', 'criado_em'], ['titulos', 'fin_titulos', 'criado_em'], ['baixas', 'fin_baixas', 'criado_em'], ['compensacoes', 'fin_compensacoes', 'criado_em'], ['conferencia', 'fin_conferencia', 'chave'], ['lalamove', 'fin_lalamove', 'quando'], ['lalamove_extratos', 'fin_lalamove_extratos', 'periodo']]) fin[k] = await todasLinhas(t, '*', o, null);
       m('Montando o arquivo…');
       const z = new JSZip();
       z.file('info.json', JSON.stringify({ sistema: 'Painel Cia Beauty', gerado_em: new Date().toISOString(), por: USER.email, registros: regs.length, xmls: xmls.length }, null, 2));

@@ -395,7 +395,10 @@ async function lerPlanilha(file){
   const buf=await file.arrayBuffer();let wb;
   if(/\.(csv|txt)$/i.test(file.name)){let txt=new TextDecoder('utf-8').decode(buf);if(txt.includes('\uFFFD'))txt=new TextDecoder('windows-1252').decode(buf);wb=XLSX.read(txt.replace(/^\uFEFF/,''),{type:'string',raw:true,FS:txt.split('\n')[0].includes(';')?';':','})}
   else wb=XLSX.read(buf,{type:'array',cellDates:false});
-  const ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  // algumas planilhas (ex.: extrato da Lalamove) declaram um tamanho menor que o real: recalcula pelo conteúdo
+  let mr=0,mc=0,tem=false;Object.keys(ws).forEach(k=>{if(k[0]==='!')return;const c=XLSX.utils.decode_cell(k);tem=true;if(c.r>mr)mr=c.r;if(c.c>mc)mc=c.c});if(tem)ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:mr,c:mc}});
+  return XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
 }
 function acharColunas(rows,spec){
   for(let r=0;r<Math.min(rows.length,25);r++){
@@ -570,8 +573,8 @@ function renderInicio(){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b&&b.closest('#tab-inicio')){if(b.dataset.pid)cur=b.dataset.pid;showTab(b.dataset.go);return}
   const a=e.target.closest('[data-act]');if(a&&a.closest('#tab-inicio')){if(a.dataset.act==='novo')$('#btnNovo').click();if(a.dataset.act==='rel')$('#expTudo').click()}});
 /* ---------- abas ---------- */
-const tabs=['inicio','entregas','simulador','produtos','carteira','compras','notas','vendas','estoque','fin-pagar','fin-receber','fin-conf','fin-dre','fin-fluxo'];
-const LBL={"inicio": ["Início", "Cia Beauty · projetos licenciados"], "entregas": ["Entregas", "Status de recebimento por projeto"], "simulador": ["Custos", "Custo e necessidade de caixa por lote"], "produtos": ["Produtos", "Do que cada produto é feito: insumos, fornecedores e lote"], "fin-pagar": ["Contas a pagar", "Financeiro · fornecedores, folha, Lala Move, antecipações e pagamentos por fora"], "fin-receber": ["Contas a receber", "Financeiro · notas de venda e antecipações de clientes"], "fin-conf": ["Conferência de notas", "Financeiro · decida quais notas de entrada e saída geram título"], "fin-dre": ["DRE Financeiro", "Financeiro · resultado pelo regime de caixa"], "fin-fluxo": ["Fluxo de caixa", "Financeiro · realizado e previsto"], "carteira": ["Carteira", "Desembolso dos próximos lotes"], "compras": ["Compras", "Insumos comprados nas NFs de entrada"], "notas": ["Notas XML", "Importar e exportar NF-e de entrada e saída"], "vendas": ["Vendas", "Vendas por produto, canal e mês"], "estoque": ["Estoque", "Estoque atual no armazém Stralog"]};
+const tabs=['inicio','entregas','simulador','produtos','carteira','compras','notas','vendas','estoque','fin-pagar','fin-lala','fin-receber','fin-conf','fin-dre','fin-fluxo'];
+const LBL={"inicio": ["Início", "Cia Beauty · projetos licenciados"], "entregas": ["Entregas", "Status de recebimento por projeto"], "simulador": ["Custos", "Custo e necessidade de caixa por lote"], "produtos": ["Produtos", "Do que cada produto é feito: insumos, fornecedores e lote"], "fin-pagar": ["Contas a pagar", "Financeiro · fornecedores, folha, Lala Move, antecipações e pagamentos por fora"], "fin-lala": ["Lala Move", "Financeiro · Contas a pagar · corridas, recargas e custos"], "fin-receber": ["Contas a receber", "Financeiro · notas de venda e antecipações de clientes"], "fin-conf": ["Conferência de notas", "Financeiro · decida quais notas de entrada e saída geram título"], "fin-dre": ["DRE Financeiro", "Financeiro · resultado pelo regime de caixa"], "fin-fluxo": ["Fluxo de caixa", "Financeiro · realizado e previsto"], "carteira": ["Carteira", "Desembolso dos próximos lotes"], "compras": ["Compras", "Insumos comprados nas NFs de entrada"], "notas": ["Notas XML", "Importar e exportar NF-e de entrada e saída"], "vendas": ["Vendas", "Vendas por produto, canal e mês"], "estoque": ["Estoque", "Estoque atual no armazém Stralog"]};
 function showTab(t){if(!tabs.includes(t))t='inicio';$('#kpis').hidden=t!=='inicio';$('#tabTitle').textContent=t==='inicio'?('Olá'+(window.__NOME?', '+window.__NOME:'')):t.startsWith('fin-')?LBL[t][0]:LBL[t][0]==='Custos'?'Custos':LBL[t][0]==='Produtos'?'Produtos':LBL[t][0]==='Carteira'?'Carteira futura':LBL[t][0]==='Compras'?'Compras de insumos':LBL[t][0]==='Notas XML'?'Notas fiscais (XML)':LBL[t][0]==='Estoque'?'Estoque Stralog':LBL[t][0]==='Vendas'?'Vendas':'Entregas';$('#tabSub').textContent=LBL[t][1];window.scrollTo(0,0);document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));tabs.forEach(x=>$('#tab-'+x).hidden=x!==t);if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);renderAll()}
 document.querySelector('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)});
 window.addEventListener('hashchange',()=>showTab(location.hash.slice(1)));
@@ -757,9 +760,9 @@ function renderFin(t){
   const root=$('#root-'+t);if(!root)return;
   if(!window.CIA_SB){root.innerHTML='<p class="note">Conectando…</p>';return}
   if(!FIN.ok){root.innerHTML=FIN.erro?'<div class="callout">Não consegui abrir o financeiro: '+esc(FIN.erro)+'. Confira se o seu usuário tem a aba Financeiro liberada.</div>':'<p class="note">Carregando o financeiro…</p>';if(!FIN.erro)finCarregar().then(()=>renderFin(t)).catch(()=>renderFin(t));return}
-  if(t==='fin-conf')finConf(root);if(t==='fin-pagar')finLista(root,'pagar');if(t==='fin-receber')finLista(root,'receber');if(t==='fin-dre')finDre(root);if(t==='fin-fluxo')finFluxo(root);
+  if(t==='fin-conf')finConf(root);if(t==='fin-pagar')finLista(root,'pagar');if(t==='fin-receber')finLista(root,'receber');if(t==='fin-dre')finDre(root);if(t==='fin-fluxo')finFluxo(root);if(t==='fin-lala')finLala(root);
 }
-let finRT=null;function finRealtime(){if(finRT||!window.CIA_SB)return;let tm;finRT=finSB().channel('fin');['fin_titulos','fin_baixas','fin_compensacoes','fin_conferencia','fin_contas'].forEach(tb=>finRT.on('postgres_changes',{event:'*',schema:'public',table:tb},()=>{clearTimeout(tm);tm=setTimeout(()=>{if(FIN.ok)finCarregar(true).then(finRenderAtual)},700)}));finRT.subscribe()}
+let finRT=null;function finRealtime(){if(finRT||!window.CIA_SB)return;let tm;finRT=finSB().channel('fin');['fin_titulos','fin_baixas','fin_compensacoes','fin_conferencia','fin_contas','fin_lalamove_extratos'].forEach(tb=>finRT.on('postgres_changes',{event:'*',schema:'public',table:tb},()=>{clearTimeout(tm);tm=setTimeout(()=>{if(FIN.ok)Promise.all([finCarregar(true),LL.rows?llCarregar(true):null]).then(finRenderAtual)},700)}));finRT.subscribe()}
 
 /* ---------- conferência de notas ---------- */
 const FC={f:'pend',tipo:'',q:'',sel:new Set(),montado:false,pg:0,pp:20};try{const v=+localStorage.getItem('ciab-fc-pp');if([15,20,25,30,50].includes(v))FC.pp=v}catch(e){}
@@ -857,7 +860,7 @@ function finLista(root,tipo){
   if(!root.querySelector('#flBody')){
     const P=tipo==='pagar';
     root.innerHTML='<div class="fin-bar"><span class="eyebrow">Ver por</span><div class="chips" data-emp-box></div></div><div class="fin-kpis" data-kpis></div><div data-aviso></div>'+
-      '<div class="fin-bar"><button class="btn pri" data-novo="manual">+ Lançamento</button><button class="btn" data-novo="antecipacao">+ Antecipação '+(P?'a fornecedor':'de cliente')+'</button>'+(P?'<button class="btn" data-novo="por_fora">+ Pagamento por fora</button><button class="btn" data-novo="folha">+ Folha (manual)</button><button class="btn" data-imp="lalamove">Importar Lala Move</button><button class="btn" data-imp="folha">Importar resumo da folha</button>':'')+'</div>'+
+      '<div class="fin-bar"><button class="btn pri" data-novo="manual">+ Lançamento</button><button class="btn" data-novo="antecipacao">+ Antecipação '+(P?'a fornecedor':'de cliente')+'</button>'+(P?'<button class="btn" data-novo="por_fora">+ Pagamento por fora</button><button class="btn" data-novo="folha">+ Folha (manual)</button><a class="btn" href="#fin-lala">Lala Move</a><button class="btn" data-imp="folha">Importar resumo da folha</button>':'')+'</div>'+
       '<div class="fin-bar"><div class="chips" data-st><button class="chip" data-s="aberto">Em aberto</button><button class="chip" data-s="vencido">Vencidos</button><button class="chip" data-s="quitado">'+(P?'Pagos':'Recebidos')+'</button><button class="chip" data-s="antecip">Antecipações</button><button class="chip" data-s="comp">Podem compensar</button><button class="chip" data-s="todos">Todos</button></div>'+
       '<label class="note">Vencimento de <input type="date" data-de></label><label class="note">até <input type="date" data-ate></label><span data-catbox></span><input type="search" data-q placeholder="Buscar fornecedor, cliente, NF ou descrição" aria-label="Buscar títulos"></div><div id="flBody"></div>';
     root.querySelector('[data-emp-box]').id='flEmp-'+tipo;
@@ -1020,7 +1023,7 @@ function finFluxo(root){
   root.querySelectorAll('[data-ct-del]').forEach(b=>b.onclick=()=>{if(!b.dataset.ok){b.dataset.ok='1';b.textContent='Confirmar';return}finExec(async()=>{const{error}=await finSB().from('fin_contas').delete().eq('id',b.closest('tr').dataset.ct);if(error)throw error},'Conta excluída')});
 }
 /* ---------- exportar a aba do financeiro ---------- */
-function finExportar(t,btn){if(!window.XLSX){btn.textContent='Leitor de planilhas não carregou';return}const root=$('#root-'+t);const tb=root&&root.querySelector('table.fin-tbl');if(!tb)return;
+function finExportar(t,btn){if(!window.XLSX){btn.textContent='Leitor de planilhas não carregou';return}const root=$('#root-'+t);const tb=root&&(root.querySelector('table.fin-tbl[data-exp]')||root.querySelector('table.fin-tbl'));if(!tb)return;
   const rows=[...tb.querySelectorAll('tr')].filter(r=>!r.classList.contains('det')).map(r=>[...r.children].map(c=>{const s=c.innerText.replace(/\s+/g,' ').trim();const n=s.replace(/R\$\s?/,'').replace(/\./g,'').replace(',','.');return /^-?\d+(\.\d+)?$/.test(n)?+n:s}));
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),(LBL[t][0]).slice(0,31));
   const blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -1091,6 +1094,139 @@ async function finImportGerar(m,b){const T=finImportLinhas(m);if(!T.length)retur
   try{const{error}=await finSB().from('fin_titulos').insert(T.map(t=>Object.assign({tipo:'pagar',origem:FI.tipo,empresa_doc:emp},t)));if(error)throw error;
     m.hidden=true;await finCarregar(true);finMsg(T.length+' título(s) importado(s)');FL.pagar.st='aberto';finRenderAtual()}
   catch(err){m.querySelector('#fiMsg').textContent='Não salvou: '+(err.message||err);b.disabled=false}}
+
+/* ---------- Lala Move (Financeiro › Contas a pagar) ---------- */
+/* Lê o extrato detalhado em Excel da Lalamove ("Monthly Statement Detailed Breakdown"). O PDF é só o resumo. */
+const LL={rows:null,ext:[],carregando:null,erro:'',ano:null,ref:null,imp:null,corr:[]};
+const llDia=d=>d.toISOString().slice(0,10);
+const llD=s=>new Date(s+'T12:00:00');
+const llSemIni=s=>{const d=llD(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return llDia(d)};
+const llMesRot=p=>MESES[+p.slice(5,7)-1]+'/'+p.slice(2,4);
+const llNum=v=>{if(typeof v==='number')return v;const n=parseFloat(String(v==null?'':v).replace(/[^\d.\-]/g,''));return isNaN(n)?0:n};
+async function llCarregar(forcar){
+  if(LL.carregando&&!forcar)return LL.carregando;
+  LL.carregando=(async()=>{const[R,E]=await Promise.all([finTodas('fin_lalamove','quando'),finTodas('fin_lalamove_extratos','periodo')]);LL.rows=R;LL.ext=E;llDerivar();LL.erro=''})()
+    .catch(e=>{LL.erro=e.message||String(e);LL.carregando=null;throw e});
+  return LL.carregando}
+function llDerivar(){const ped={};
+  LL.rows.forEach(r=>{r.v=+r.valor;r.d=String(r.quando).replace('T',' ').slice(0,19);r.dia=r.d.slice(0,10);
+    if(r.tipo==='ORDER'&&r.pedido){const p=ped[r.pedido]||(ped[r.pedido]={id:r.pedido,valor:0,reemb:0,dia:null});if(r.acao==='Order'){p.valor+=-r.v;p.dia=r.dia;p.hora=r.d;p.forma=r.forma}if(r.acao==='Refund')p.reemb+=r.v}});
+  LL.corr=Object.values(ped).filter(p=>p.dia);LL.corr.forEach(p=>{p.cancelada=p.reemb>=p.valor-0.01});
+  const dias=LL.corr.map(p=>p.dia).sort();LL.ultimo=dias[dias.length-1]||null}
+function llAgg(ini,fim){const R=LL.rows.filter(r=>r.dia>=ini&&r.dia<=fim);const s=f=>finR(R.filter(f).reduce((a,r)=>a+r.v,0));
+  const C=LL.corr.filter(p=>p.dia>=ini&&p.dia<=fim);const o={corridas:C.filter(p=>!p.cancelada).length,canceladas:C.filter(p=>p.cancelada).length};
+  o.pedidos=-s(r=>r.acao==='Order');o.prioridade=-s(r=>r.acao==='Priority fee');o.cancel=-s(r=>r.acao==='Cancellation fee');
+  o.reemb=s(r=>/^Refund/.test(r.acao));o.liquido=-s(r=>r.tipo!=='TOP-UP');o.outros=finR(o.liquido-o.pedidos-o.prioridade-o.cancel+o.reemb);
+  o.recargas=s(r=>r.tipo==='TOP-UP');o.dinheiro=-s(r=>r.tipo!=='TOP-UP'&&r.forma==='Cash');o.online=-s(r=>r.tipo!=='TOP-UP'&&r.forma==='Online payment');
+  ['pedidos','prioridade','cancel','reemb','liquido','outros','recargas','dinheiro','online'].forEach(k=>{o[k]=finR(o[k])+0});o.medio=o.corridas?o.liquido/o.corridas:0;return o}
+function finLala(root){
+  if(!LL.rows){root.innerHTML=LL.erro?'<div class="callout">Não consegui abrir o Lala Move: '+esc(LL.erro)+'. Se for a primeira vez, falta criar as tabelas no banco.</div>':'<p class="note">Carregando as corridas…</p>';if(!LL.erro)llCarregar().then(()=>finLala(root)).catch(()=>finLala(root));return}
+  const anos=[...new Set(LL.rows.map(r=>r.dia.slice(0,4)))].sort();
+  if(!LL.ref)LL.ref=LL.ultimo||fHoje();const ref=LL.ref;const ano=ref.slice(0,4);
+  const mesIni=ref.slice(0,8)+'01',mesFim=llDia(new Date(+ref.slice(0,4),+ref.slice(5,7),0,12)),sIni=llSemIni(ref),sFim=fAddDias(sIni,6);
+  const box=(rot,sub,o,cls)=>'<div class="box'+(cls?' '+cls:'')+'"><span class="eyebrow">'+rot+'</span><b>'+o.corridas+' corrida'+(o.corridas===1?'':'s')+'</b><span class="note">'+esc(sub)+'</span><span class="note">'+fmtR.format(o.liquido)+(o.corridas?' · média '+fmtR.format(o.medio):'')+(o.canceladas?' · '+o.canceladas+' cancelada'+(o.canceladas===1?'':'s'):'')+'</span></div>';
+  const kD=llAgg(ref,ref),kS=llAgg(sIni,sFim),kM=llAgg(mesIni,mesFim),kA=llAgg(ano+'-01-01',ano+'-12-31');
+  // meses do ano
+  const ms=[];for(let i=1;i<=12;i++){const p=ano+'-'+String(i).padStart(2,'0');const fim=llDia(new Date(+ano,i,0,12));const o=llAgg(p+'-01',fim);const ex=LL.ext.find(e=>e.periodo===p);if(o.corridas||o.canceladas||o.recargas||ex)ms.push({p,o,ex})}
+  const tot=llAgg(ano+'-01-01',ano+'-12-31');
+  const confere=ex=>{if(!ex||ex.saldo_inicial==null)return '<span class="note">—</span>';const mov=finR(LL.rows.filter(r=>r.periodo===ex.periodo&&r.conta===ex.conta&&r.forma==='Business wallet').reduce((a,r)=>a+r.v,0));const dif=finR(+ex.saldo_inicial+mov-(+ex.saldo_final));
+    return Math.abs(dif)<0.01?'<span class="pill ok" title="Saldo inicial + movimentos da carteira = saldo final">Confere</span>':'<span class="pill bad" title="Diferença entre o extrato e as linhas importadas">Diferença '+fmtR.format(dif)+'</span>'};
+  const titCel=(p,ex)=>{if(!ex)return '<span class="note">sem extrato</span>';const t=ex.titulo_id&&FIN.byId[ex.titulo_id];if(t)return '<span title="'+esc(fmtR.format(t.valor)+' · '+t.descricao)+'">'+finSt(t)+'</span>';return '<button class="btn" data-ll-tit="'+p+'">Gerar título</button>'};
+  const cel=v=>'<td class="n">'+(Math.abs(v)<0.005?'—':fmtR.format(v))+'</td>';
+  let tb='<div class="tbl-wrap"><table class="fin-tbl ll-mes" data-exp><thead><tr><th>Mês</th><th class="n">Corridas</th><th class="n">Cancel.</th><th class="n">Pedidos</th><th class="n" title="Prioridade, cancelamento e outros">Taxas</th><th class="n">Reembolsos</th><th class="n">Custo líquido</th><th class="n">Média</th><th class="n">Recargas</th><th>Extrato</th><th>Título</th></tr></thead><tbody>'+
+    ms.map(({p,o,ex})=>'<tr'+(p===ref.slice(0,7)?' class="sel"':'')+'><td><button class="lnk" data-ll-mes="'+p+'">'+llMesRot(p)+'</button></td><td class="n">'+o.corridas+'</td><td class="n">'+(o.canceladas||'—')+'</td>'+cel(o.pedidos)+cel(o.prioridade+o.cancel+o.outros)+cel(-o.reemb)+'<td class="n"><b>'+fmtR.format(o.liquido)+'</b></td>'+cel(o.medio)+cel(o.recargas)+'<td>'+confere(ex)+'</td><td>'+titCel(p,ex)+'</td></tr>').join('')+
+    '</tbody><tfoot><tr><td>Total '+ano+'</td><td class="n">'+tot.corridas+'</td><td class="n">'+(tot.canceladas||'—')+'</td>'+cel(tot.pedidos)+cel(tot.prioridade+tot.cancel+tot.outros)+cel(-tot.reemb)+'<td class="n">'+fmtR.format(tot.liquido)+'</td>'+cel(tot.medio)+cel(tot.recargas)+'<td></td><td></td></tr></tfoot></table></div>';
+  // dias do mês (gráfico) e semanas
+  const dias=[];for(let d=mesIni;d<=mesFim;d=fAddDias(d,1))dias.push({d,o:llAgg(d,d)});
+  const W=Math.max(560,dias.length*22),H=170,pl=34,pb=22,pt=8,mx=Math.max(1,...dias.map(x=>x.o.corridas)),bw=(W-pl-6)/dias.length,y=v=>H-pb-(H-pb-pt)*v/mx;
+  let svg='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Corridas por dia em '+llMesRot(mesIni)+'">';
+  for(let i=0;i<=4;i++){const v=Math.round(mx*i/4);svg+='<line x1="'+pl+'" x2="'+(W-4)+'" y1="'+y(v).toFixed(1)+'" y2="'+y(v).toFixed(1)+'" stroke="var(--line)"/><text x="'+(pl-5)+'" y="'+(y(v)+3).toFixed(1)+'" text-anchor="end">'+v+'</text>'}
+  dias.forEach((x,i)=>{const X=pl+i*bw,dw=llD(x.d).getDay(),fds=dw===0||dw===6;svg+='<g data-ll-dia="'+x.d+'" style="cursor:pointer"><rect x="'+X.toFixed(1)+'" y="'+pt+'" width="'+bw.toFixed(1)+'" height="'+(H-pb-pt)+'" fill="transparent"/>'+(x.o.corridas?'<rect x="'+(X+bw*.18).toFixed(1)+'" y="'+y(x.o.corridas).toFixed(1)+'" width="'+(bw*.64).toFixed(1)+'" height="'+(H-pb-y(x.o.corridas)).toFixed(1)+'" rx="2" fill="'+(x.d===ref?'var(--fg)':'var(--accent)')+'"/>':'')+'<text x="'+(X+bw/2).toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle"'+(fds?' style="opacity:.5"':'')+'>'+(+x.d.slice(8))+'</text><title>'+fD(x.d)+': '+x.o.corridas+' corrida(s) · '+fmtR.format(x.o.liquido)+'</title></g>'});svg+='</svg>';
+  const sems=[];for(let s0=llSemIni(mesIni);s0<=mesFim;s0=fAddDias(s0,7)){const s=s0<mesIni?mesIni:s0,f=fAddDias(s0,6)>mesFim?mesFim:fAddDias(s0,6);sems.push({s0,s,f,o:llAgg(s,f)})}
+  const top=dias.slice().sort((a,b)=>b.o.corridas-a.o.corridas)[0];
+  const extList=LL.ext.slice().sort((a,b)=>b.periodo.localeCompare(a.periodo));
+  root.innerHTML='<div class="fin-bar"><a class="btn" href="#fin-pagar">‹ Contas a pagar</a><label class="btn pri" style="cursor:pointer">Importar extratos (Excel)<input type="file" id="llArq" accept=".xlsx,.xls" multiple hidden></label>'+
+      '<label class="note">Referência <input type="date" id="llRef" value="'+ref+'"></label>'+(anos.length>1?'<div class="chips">'+anos.map(a=>'<button class="chip" data-ll-ano="'+a+'" aria-pressed="'+(a===ano)+'">'+a+'</button>').join('')+'</div>':'')+
+      (LL.ultimo?'<span class="note">Última corrida importada: '+fD(LL.ultimo)+'</span>':'')+'</div>'+
+    (LL.rows.length?'':'<div class="fin-aviso"><span>Nenhum extrato importado ainda. No app da Lalamove, baixe o <b>extrato mensal detalhado em Excel</b> (Monthly Statement Detailed Breakdown) e importe aqui. Dá para escolher vários meses de uma vez.</span></div>')+
+    '<div class="fin-kpis">'+box('Dia',fD(ref),kD)+box('Semana',fD(sIni)+' a '+fD(sFim),kS)+box('Mês',llMesRot(ref),kM)+box('Ano',ano,kA,'ok')+'</div>'+
+    '<div class="panel"><div class="row"><h3 class="grow" style="margin:0">Corridas por dia · '+llMesRot(ref)+'</h3><span class="note">'+(top&&top.o.corridas?'Dia com mais corridas: '+fD(top.d)+' ('+top.o.corridas+')':'')+'</span></div><p class="note" style="margin:4px 0 8px">Clique num dia para ver o dia e a semana nos contadores. Canceladas e reembolsadas não contam como corrida.</p><div class="fin-chart">'+svg+'</div>'+
+      '<div class="tbl-wrap" style="margin-top:10px"><table class="fin-tbl"><thead><tr><th>Semana do mês (seg a dom)</th><th class="n">Corridas</th><th class="n">Canceladas</th><th class="n">Custo líquido</th><th class="n">Média por corrida</th></tr></thead><tbody>'+sems.map(x=>'<tr'+(x.s0===sIni?' class="sel"':'')+'><td><button class="lnk" data-ll-dia="'+x.s+'">'+fD(x.s)+' a '+fD(x.f)+'</button></td><td class="n">'+x.o.corridas+'</td><td class="n">'+(x.o.canceladas||'—')+'</td>'+cel(x.o.liquido)+cel(x.o.medio)+'</tr>').join('')+'</tbody></table></div></div>'+
+    '<div class="panel"><h3 style="margin:0 0 8px">Mês a mês · '+ano+'</h3><p class="note" style="margin:0 0 8px">Custo líquido = pedidos + taxas − reembolsos, inclusive corridas pagas em dinheiro. O título a pagar de cada mês leva as <b>recargas da carteira</b> (e pagamentos online), que é o que sai do caixa, já baixado nos dias das recargas.</p>'+tb+'</div>'+
+    '<div class="panel"><h3 style="margin:0 0 8px">Extratos importados</h3>'+(extList.length?'<div class="tbl-wrap"><table class="fin-tbl"><thead><tr><th>Período</th><th>Conta Lalamove</th><th>Arquivo</th><th class="n">Linhas</th><th class="n">Saldo inicial</th><th class="n">Saldo final</th><th>Importado em</th><th></th></tr></thead><tbody>'+
+      extList.map(e=>'<tr><td>'+llMesRot(e.periodo)+'</td><td>'+esc((e.empresa||'')+' · '+e.conta)+'</td><td class="wrap">'+esc(e.arquivo||'')+'</td><td class="n">'+(e.linhas||0)+'</td><td class="n">'+fmtR.format(+e.saldo_inicial||0)+'</td><td class="n">'+fmtR.format(+e.saldo_final||0)+'</td><td class="mono">'+(e.importado_em?new Date(e.importado_em).toLocaleDateString('pt-BR'):'')+'</td><td><button class="btn soGestor" data-ll-del="'+esc(e.conta+'|'+e.periodo)+'">Remover</button></td></tr>').join('')+'</tbody></table></div>':'<p class="note">Nenhum ainda.</p>')+'</div>';
+  root.querySelector('#llRef').onchange=e=>{if(e.target.value){LL.ref=e.target.value;finLala(root)}};
+  root.querySelector('#llArq').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)llImportar(fs)};
+  root.onclick=e=>{const a=e.target.closest('[data-ll-ano]'),m=e.target.closest('[data-ll-mes]'),d=e.target.closest('[data-ll-dia]'),t=e.target.closest('[data-ll-tit]'),x=e.target.closest('[data-ll-del]');
+    if(a){const ds=LL.corr.filter(p=>p.dia.startsWith(a.dataset.llAno)).map(p=>p.dia).sort();LL.ref=ds[ds.length-1]||a.dataset.llAno+'-12-31';finLala(root);return}
+    if(m){const ds=LL.corr.filter(p=>p.dia.startsWith(m.dataset.llMes)).map(p=>p.dia).sort();LL.ref=ds[ds.length-1]||m.dataset.llMes+'-01';finLala(root);return}
+    if(d){LL.ref=d.dataset.llDia;finLala(root);return}
+    if(t){t.disabled=true;finExec(async()=>{await llGerarTitulo(t.dataset.llTit,null)},'Título do Lala Move gerado').then(()=>llCarregar(true)).then(()=>finRenderAtual());return}
+    if(x){if(!x.dataset.ok){x.dataset.ok='1';x.textContent='Confirmar remoção';return}const[c,p]=x.dataset.llDel.split('|');
+      finExec(async()=>{let r=await finSB().from('fin_lalamove').delete().eq('conta',c).eq('periodo',p);if(r.error)throw r.error;r=await finSB().from('fin_lalamove_extratos').delete().eq('conta',c).eq('periodo',p);if(r.error)throw r.error;await llCarregar(true)},'Extrato removido (o título a pagar continua em Contas a pagar)')}};
+}
+/* leitura do Excel detalhado */
+function llLer(rows,nome){
+  const h=rows.findIndex(r=>String(r[0]).trim().toUpperCase()==='TYPE');if(h<0)throw new Error(nome+': não é o extrato detalhado da Lalamove (não achei a coluna TYPE). Use o Excel "Detailed Breakdown", não o PDF.');
+  const meta={};rows.slice(0,h).forEach(r=>{if(r[0])meta[String(r[0]).trim()]=String(r[1]==null?'':r[1]).trim()});
+  const H=rows[h].map(x=>String(x).trim().toUpperCase());const c=n=>H.indexOf(n);
+  const ix={tipo:c('TYPE'),acao:c('ACTION'),pedido:c('ORDER ID'),quando:c('TRANSACTION TIMESTAMP'),forma:c('PAYMENT METHOD'),valor:c('TRANSACTION AMOUNT'),usuario:c('USER')};
+  if(ix.tipo<0||ix.acao<0||ix.quando<0||ix.valor<0)throw new Error(nome+': colunas do extrato não reconhecidas.');
+  const conta=meta['Company ID']||'lalamove';const rng=(meta['Date Range']||'').match(/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/);
+  const L=[],cont={};
+  rows.slice(h+1).forEach(r=>{const tipo=String(r[ix.tipo]||'').trim().toUpperCase();if(!tipo)return;
+    let q=r[ix.quando];if(typeof q==='number'){const d=new Date(Math.round((q-25569)*864e5));q=d.toISOString().slice(0,19).replace('T',' ')}q=String(q).trim();
+    const o={conta,tipo,acao:String(r[ix.acao]||'').trim(),pedido:ix.pedido>=0?String(r[ix.pedido]||'').trim()||null:null,quando:q,forma:ix.forma>=0?String(r[ix.forma]||'').trim():'',valor:finR(llNum(r[ix.valor])),usuario:ix.usuario>=0?String(r[ix.usuario]||'').trim():''};
+    const k=[conta,o.pedido||'',o.acao,o.quando,o.valor.toFixed(2),o.forma].join('|');cont[k]=(cont[k]||0)+1;o.id=k+'|'+cont[k];L.push(o)});
+  const datas=L.map(x=>x.quando.slice(0,10)).sort();const de=rng?rng[1]:datas[0],ate=rng?rng[2]:datas[datas.length-1];
+  if(!de)throw new Error(nome+': o extrato está vazio.');
+  const periodo=de.slice(0,7);L.forEach(x=>{x.periodo=periodo});
+  const si=meta['Opening balance (Business wallet)'],sf=meta['Closing balance (Business wallet)'];
+  return{arquivo:nome,conta,empresa:meta['Company Name']||'',periodo,de,ate,gerado_em:(meta['Date/Time of Generation']||'').replace(/^Generated by Lalamove at\s*/i,''),saldo_inicial:si!==undefined&&si!==''?finR(llNum(si)):null,saldo_final:sf!==undefined&&sf!==''?finR(llNum(sf)):null,linhas:L}}
+async function llImportar(files){
+  finModal('pagar','manual',null);const m=$('#finModal');const ex=[],erros=[];
+  m.innerHTML='<div class="panel"><div class="row"><h2 class="grow">Importar extratos do Lala Move</h2><button type="button" class="btn" data-fechar-fin>Fechar</button></div><p class="note">Lendo '+files.length+' arquivo(s)…</p></div>';m.hidden=false;
+  for(const f of files){try{ex.push(llLer(await lerPlanilha(f),f.name))}catch(e){erros.push(e.message||String(e))}}
+  ex.sort((a,b)=>a.periodo.localeCompare(b.periodo));
+  const ja=new Set(LL.rows.map(r=>r.id));
+  // uma linha por arquivo; mesmo mês repetido fica só o mais completo
+  const porMes={};ex.forEach(x=>{const k=x.conta+'|'+x.periodo;if(!porMes[k]||x.linhas.length>porMes[k].linhas.length)porMes[k]=x});const E=Object.values(porMes);
+  LL.imp=E;
+  const linha=x=>{const ag={v:a=>finR(x.linhas.filter(a).reduce((s,r)=>s+r.valor,0))};const novas=x.linhas.filter(r=>!ja.has(r.id)).length;const ped={};x.linhas.forEach(r=>{if(r.pedido){const p=ped[r.pedido]||(ped[r.pedido]={o:0,r:0,tem:false});if(r.acao==='Order'){p.o+=-r.valor;p.tem=true}if(r.acao==='Refund')p.r+=r.valor}});
+    const corr=Object.values(ped).filter(p=>p.tem&&p.r<p.o-0.01).length;const rec=ag.v(r=>r.tipo==='TOP-UP'),liq=-ag.v(r=>r.tipo!=='TOP-UP');
+    const mov=ag.v(r=>r.forma==='Business wallet');const ok=x.saldo_inicial==null||Math.abs(finR(x.saldo_inicial+mov-x.saldo_final))<0.01;
+    return '<tr><td class="wrap">'+esc(x.arquivo)+'</td><td>'+llMesRot(x.periodo)+'</td><td class="n">'+x.linhas.length+'</td><td class="n">'+(novas===x.linhas.length?'todas':novas?novas+' novas':'<span class="pill neu">já importado</span>')+'</td><td class="n">'+corr+'</td><td class="n">'+fmtR.format(rec)+'</td><td class="n">'+fmtR.format(liq)+'</td><td>'+(ok?'<span class="pill ok">Confere</span>':'<span class="pill bad">Não confere</span>')+'</td></tr>'};
+  m.innerHTML='<div class="panel" id="llPanel"><div class="row"><h2 class="grow">Importar extratos do Lala Move</h2><button type="button" class="btn" data-fechar-fin>Fechar</button></div>'+
+    (erros.length?'<div class="callout">'+erros.map(esc).join('<br>')+'</div>':'')+
+    (E.length?'<div class="tbl-wrap"><table class="fin-tbl"><thead><tr><th>Arquivo</th><th>Mês</th><th class="n">Linhas</th><th class="n">Situação</th><th class="n">Corridas</th><th class="n">Recargas</th><th class="n">Custo líquido</th><th>Saldo da carteira</th></tr></thead><tbody>'+E.map(linha).join('')+'</tbody></table></div>'+
+      '<div class="fin-form" style="margin-top:10px"><label>Empresa que paga o Lala Move<select id="llEmp"><option value="">Grupo / não informada</option>'+empresasGrupo().map(x=>'<option value="'+x.doc+'"'+(x.doc===EMP?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+'</select></label>'+
+      '<label class="full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="llTit" checked> Gerar o título a pagar de cada mês, já baixado nos dias das recargas</label></div>'+
+      '<p class="note">Reimportar o mesmo mês não duplica: as linhas já gravadas são ignoradas. "Confere" quer dizer que saldo inicial + movimentos da carteira bate com o saldo final do extrato.</p>'+
+      '<div class="row" style="margin-top:8px"><button class="btn pri" type="button" id="llGo">Importar '+E.length+' extrato(s)</button><span class="note" id="llMsg" aria-live="polite"></span></div>':'<p class="note">Nenhum extrato válido para importar.</p>')+'</div>';
+  const go=m.querySelector('#llGo');if(go)go.onclick=async()=>{go.disabled=true;const msg=m.querySelector('#llMsg');const emp=m.querySelector('#llEmp').value||null,gerar=m.querySelector('#llTit').checked;
+    try{for(const x of E){msg.textContent='Gravando '+llMesRot(x.periodo)+'…';
+        for(let i=0;i<x.linhas.length;i+=500){const{error}=await finSB().from('fin_lalamove').upsert(x.linhas.slice(i,i+500),{onConflict:'id',ignoreDuplicates:true});if(error)throw error}
+        const{error}=await finSB().from('fin_lalamove_extratos').upsert({conta:x.conta,periodo:x.periodo,empresa:x.empresa,empresa_doc:emp,de:x.de,ate:x.ate,saldo_inicial:x.saldo_inicial,saldo_final:x.saldo_final,gerado_em:x.gerado_em,arquivo:x.arquivo,linhas:x.linhas.length},{onConflict:'conta,periodo'});if(error)throw error}
+      await llCarregar(true);
+      if(gerar){await finCarregar(true);for(const x of E){msg.textContent='Gerando título de '+llMesRot(x.periodo)+'…';await llGerarTitulo(x.periodo,x.conta)}await llCarregar(true)}
+      await finCarregar(true);m.hidden=true;const ds=LL.corr.map(p=>p.dia).sort();LL.ref=ds[ds.length-1]||LL.ref;finMsg(E.length+' extrato(s) do Lala Move importado(s)');finRenderAtual()}
+    catch(err){msg.textContent='Não salvou: '+(err.message||err);go.disabled=false}};
+}
+/* título a pagar do mês = recargas da carteira + pagamentos online, baixado nos dias em que saiu o dinheiro */
+async function llGerarTitulo(periodo,conta){
+  const ex=LL.ext.find(e=>e.periodo===periodo&&(!conta||e.conta===conta));if(!ex)throw new Error('Extrato de '+llMesRot(periodo)+' não encontrado.');
+  const chave='LALAMOVE-'+ex.conta+'-'+periodo;
+  const ja=FIN.T.find(t=>t.nf_chave===chave);if(ja){if(ex.titulo_id!==ja.id){const{error}=await finSB().from('fin_lalamove_extratos').update({titulo_id:ja.id}).eq('conta',ex.conta).eq('periodo',periodo);if(error)throw error}return}
+  const R=LL.rows.filter(r=>r.periodo===periodo&&r.conta===ex.conta);
+  const pg={};R.forEach(r=>{let k=null,v=0;if(r.tipo==='TOP-UP'){k='Recarga da carteira Lalamove';v=r.v}else if(r.forma==='Online payment'){k='Pagamento online Lalamove';v=-r.v}if(!k||!v)return;const kk=r.dia+'|'+k;pg[kk]=finR((pg[kk]||0)+v)});
+  const baixas=Object.entries(pg).filter(([,v])=>v>0.004).map(([k,v])=>({data:k.split('|')[0],forma:k.split('|')[1],valor:v}));
+  const valor=finR(baixas.reduce((s,b)=>s+b.valor,0));if(!(valor>0))return;
+  const ini=ex.de||periodo+'-01',fim=ex.ate||llDia(new Date(+periodo.slice(0,4),+periodo.slice(5,7),0,12));const o=llAgg(ini,fim);
+  const{data:t,error}=await finSB().from('fin_titulos').insert({tipo:'pagar',origem:'lalamove',empresa_doc:ex.empresa_doc||null,contraparte:'Lalamove',descricao:'Lala Move · '+llMesRot(periodo)+' · '+o.corridas+' corrida(s) · recargas da carteira',categoria:'Lala Move',nf_chave:chave,parcela:'1',emissao:fim,vencimento:fim,valor,
+    obs:'Gerado do extrato '+(ex.arquivo||'')+'. Custo líquido das corridas no mês: '+fmtR.format(o.liquido)+(o.dinheiro>0.004?' (inclui '+fmtR.format(o.dinheiro)+' pagos em dinheiro, fora deste título)':'')+'.'}).select('id').single();
+  if(error)throw error;
+  const{error:e2}=await finSB().from('fin_baixas').insert(baixas.map(b=>({titulo_id:t.id,data:b.data,valor:b.valor,forma:b.forma,obs:'Extrato Lalamove '+llMesRot(periodo)})));if(e2)throw e2;
+  const{error:e3}=await finSB().from('fin_lalamove_extratos').update({titulo_id:t.id}).eq('conta',ex.conta).eq('periodo',periodo);if(e3)throw e3}
 
 /* menu Financeiro recolhível */
 function finMenu(abrir){const tg=$('#finToggle'),sub=$('#finSub');if(!tg)return;const t=location.hash.slice(1);const ativo=t.startsWith('fin-');
